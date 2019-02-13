@@ -1,10 +1,16 @@
-build
-logs
-target
-/.idea
-/.idea_modules
-/.classpath
-/.gradle
-/.project
-/.settings
-/RUNNING_PID
+# Ignore Play! working directory #
+bin/
+/db
+.eclipse
+/lib/
+/logs/
+/modules
+/project/project
+/project/target
+/target
+tmp/
+test-result
+server.pid
+*.eml
+/dist/
+.cache
