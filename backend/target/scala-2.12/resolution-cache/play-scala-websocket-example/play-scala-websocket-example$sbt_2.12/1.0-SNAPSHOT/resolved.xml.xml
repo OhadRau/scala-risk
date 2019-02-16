@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
+	<info organisation="play-scala-websocket-example"
+		module="play-scala-websocket-example$sbt_2.12"
+		revision="1.0-SNAPSHOT"
+		status="integration"
+		publication="20190216144503"
+	/>
+	<configurations>
+		<conf name="compile" visibility="public" description=""/>
+		<conf name="runtime" visibility="public" description="" extends="compile"/>
+		<conf name="test" visibility="public" description="" extends="runtime"/>
+		<conf name="provided" visibility="public" description=""/>
+		<conf name="optional" visibility="public" description=""/>
+	</configurations>
+	<publications>
+	</publications>
+	<dependencies>
+		<dependency org="org.scala-sbt" name="sbt" rev="1.2.8" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.play" name="sbt-plugin" rev="2.7.0" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0" info.apiURL="https://www.playframework.com/documentation/2.7.0/api/scala/index.html"/>
+		<dependency org="com.typesafe.play" name="sbt-routes-compiler_2.12" rev="2.7.0" conf="compile->default(compile)" info.apiURL="https://www.playframework.com/documentation/2.7.0/api/scala/index.html"/>
+		<dependency org="org.scala-lang" name="scala-library" rev="2.12.7" conf="compile->default(compile)" info.apiURL="http://www.scala-lang.org/api/2.12.7/"/>
+		<dependency org="com.typesafe.play" name="twirl-api_2.12" rev="1.4.0" conf="compile->default(compile)"/>
+		<dependency org="org.scala-lang.modules" name="scala-parser-combinators_2.12" rev="1.1.1" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.play" name="run-support_2.12" rev="2.7.0" conf="compile->default(compile)" info.apiURL="https://www.playframework.com/documentation/2.7.0/api/scala/index.html"/>
+		<dependency org="com.typesafe.play" name="build-link" rev="2.7.0" conf="compile->default(compile)" info.apiURL="https://www.playframework.com/documentation/2.7.0/api/scala/index.html"/>
+		<dependency org="com.typesafe.play" name="play-exceptions" rev="2.7.0" conf="compile->default(compile)" info.apiURL="https://www.playframework.com/documentation/2.7.0/api/scala/index.html"/>
+		<dependency org="com.lightbend.play" name="play-file-watch_2.12" rev="1.1.8" conf="compile->default(compile)"/>
+		<dependency org="io.methvin" name="directory-watcher" rev="0.8.1" conf="compile->default(compile)"/>
+		<dependency org="net.java.dev.jna" name="jna" rev="5.0.0" conf="compile->default(compile)"/>
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.25" conf="compile->default(compile)"/>
+		<dependency org="com.github.pathikrit" name="better-files_2.12" rev="2.17.1" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe" name="config" rev="1.3.3" conf="compile->default(compile)"/>
+		<dependency org="org.slf4j" name="slf4j-simple" rev="1.7.25" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.sbt" name="sbt-twirl" rev="1.4.0" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="com.typesafe.play" name="twirl-compiler_2.12" rev="1.4.0" conf="compile->default(compile)"/>
+		<dependency org="org.scala-lang" name="scala-compiler" rev="2.12.7" conf="compile->default(compile)"/>
+		<dependency org="org.scala-lang" name="scala-reflect" rev="2.12.7" conf="compile->default(compile)" info.apiURL="http://www.scala-lang.org/api/2.12.7/"/>
+		<dependency org="com.typesafe.play" name="twirl-parser_2.12" rev="1.4.0" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.sbt" name="sbt-native-packager" rev="1.3.14" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="org.apache.commons" name="commons-compress" rev="1.18" conf="compile->default(compile)"/>
+		<dependency org="org.apache.ant" name="ant" rev="1.10.5" conf="compile->default(compile)"/>
+		<dependency org="org.apache.ant" name="ant-launcher" rev="1.10.5" conf="compile->default(compile)"/>
+		<dependency org="org.scala-sbt" name="io_2.12" rev="1.2.2" conf="compile->default(compile)"/>
+		<dependency org="com.swoval" name="apple-file-events" rev="1.3.2" conf="compile->default(compile)"/>
+		<dependency org="net.java.dev.jna" name="jna-platform" rev="4.5.0" conf="compile->default(compile)"/>
+		<dependency org="com.spotify" name="docker-client" rev="8.14.3" conf="compile->default(compile)"/>
+		<dependency org="com.google.guava" name="guava" rev="20.0" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-json-provider" rev="2.9.6" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-base" rev="2.9.6" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.6" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.9.0" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.module" name="jackson-module-jaxb-annotations" rev="2.9.6" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.datatype" name="jackson-datatype-guava" rev="2.9.6" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.core" name="jersey-client" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0.1" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.core" name="jersey-common" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="javax.annotation" name="javax.annotation-api" rev="1.2" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.bundles.repackaged" name="jersey-guava" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2" name="hk2-api" rev="2.4.0-b34" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2" name="hk2-utils" rev="2.4.0-b34" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2.external" name="aopalliance-repackaged" rev="2.4.0-b34" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2.external" name="javax.inject" rev="2.4.0-b34" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2" name="hk2-locator" rev="2.4.0-b34" conf="compile->default(compile)"/>
+		<dependency org="org.javassist" name="javassist" rev="3.18.1-GA" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.hk2" name="osgi-resource-locator" rev="1.0.1" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.connectors" name="jersey-apache-connector" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="org.apache.httpcomponents" name="httpclient" rev="4.5" conf="compile->default(compile)"/>
+		<dependency org="org.apache.httpcomponents" name="httpcore" rev="4.4.5" conf="compile->default(compile)"/>
+		<dependency org="commons-logging" name="commons-logging" rev="1.2" conf="compile->default(compile)"/>
+		<dependency org="commons-codec" name="commons-codec" rev="1.9" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.media" name="jersey-media-json-jackson" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="org.glassfish.jersey.ext" name="jersey-entity-filtering" rev="2.22.2" conf="compile->default(compile)"/>
+		<dependency org="javax.activation" name="activation" rev="1.1" conf="compile->default(compile)"/>
+		<dependency org="commons-io" name="commons-io" rev="2.5" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-unixsocket" rev="0.18" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-ffi" rev="2.1.4" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jffi" rev="1.2.15" conf="compile->default(compile)"/>
+		<dependency org="org.ow2.asm" name="asm" rev="5.0.3" conf="compile->default(compile)"/>
+		<dependency org="org.ow2.asm" name="asm-commons" rev="5.0.3" conf="compile->default(compile)"/>
+		<dependency org="org.ow2.asm" name="asm-tree" rev="5.0.3" conf="compile->default(compile)"/>
+		<dependency org="org.ow2.asm" name="asm-analysis" rev="5.0.3" conf="compile->default(compile)"/>
+		<dependency org="org.ow2.asm" name="asm-util" rev="5.0.3" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-x86asm" rev="1.0.2" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-constants" rev="0.9.8" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-enxio" rev="0.16" conf="compile->default(compile)"/>
+		<dependency org="com.github.jnr" name="jnr-posix" rev="3.0.35" conf="compile->default(compile)"/>
+		<dependency org="commons-lang" name="commons-lang" rev="2.6" conf="compile->default(compile)"/>
+		<dependency org="org.bouncycastle" name="bcpkix-jdk15on" rev="1.59" conf="compile->default(compile)"/>
+		<dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="1.59" conf="compile->default(compile)"/>
+		<dependency org="org.scala-lang.modules" name="scala-xml_2.12" rev="1.1.1" conf="compile->default(compile)"/>
+		<dependency org="com.lightbend.sbt" name="sbt-javaagent" rev="0.1.4" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="com.typesafe.sbt" name="sbt-web" rev="1.4.4" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="org.scala-lang.modules" name="scala-java8-compat_2.12" rev="0.8.0" conf="compile->default(compile)"/>
+		<dependency org="org.webjars" name="webjars-locator-core" rev="0.36" conf="compile->default(compile)"/>
+		<dependency org="org.apache.commons" name="commons-lang3" rev="3.8.1" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.sbt" name="sbt-js-engine" rev="1.2.3" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="com.typesafe" name="jse_2.12" rev="1.2.4" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.akka" name="akka-actor_2.12" rev="2.5.18" conf="compile->default(compile)" info.apiURL="http://doc.akka.io/api/akka/2.5.18"/>
+		<dependency org="io.apigee.trireme" name="trireme-core" rev="0.9.4" conf="compile->default(compile)"/>
+		<dependency org="io.apigee.trireme" name="trireme-kernel" rev="0.9.4" conf="compile->default(compile)"/>
+		<dependency org="org.mozilla" name="rhino" rev="1.7.10" conf="compile->default(compile)"/>
+		<dependency org="io.apigee.trireme" name="trireme-node10src" rev="0.9.4" conf="compile->default(compile)"/>
+		<dependency org="io.spray" name="spray-json_2.12" rev="1.3.5" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe" name="npm_2.12" rev="1.2.1" conf="compile->default(compile)"/>
+		<dependency org="org.webjars" name="npm" rev="4.2.0" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.sbt" name="sbt-less" rev="1.1.2" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="org.webjars" name="less-node" rev="2.7.2" conf="compile->default(compile)"/>
+		<dependency org="org.webjars" name="mkdirp" rev="0.5.0" conf="compile->default(compile)"/>
+		<dependency org="org.webjars.npm" name="clean-css" rev="4.0.5" conf="compile->default(compile)"/>
+		<dependency org="org.webjars.npm" name="source-map" rev="0.5.7" conf="compile->default(compile)"/>
+		<dependency org="org.webjars.npm" name="less-plugin-clean-css" rev="1.5.1" conf="compile->default(compile)"/>
+		<dependency org="org.webjars" name="es6-promise-node" rev="2.1.1" conf="compile->default(compile)"/>
+		<dependency org="com.typesafe.sbt" name="sbt-coffeescript" rev="1.0.2" conf="compile->default(compile)" scalaVersion="2.12" sbtVersion="1.0"/>
+		<dependency org="org.webjars" name="coffee-script-node" rev="1.11.0" conf="compile->default(compile)"/>
+	</dependencies>
+</ivy-module>
