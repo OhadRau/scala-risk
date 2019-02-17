@@ -11,21 +11,23 @@ import play.api.libs.json.Json
 import play.api.mvc.WebSocket.MessageFlowTransformer
 
 sealed trait OutEvent
-case class RequestName(token: String) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
 case class Ok(msg: String) extends OutEvent
+case class Err(msg: String) extends OutEvent
 
 sealed trait InEvent
 case class PlayerJoined(name: String, token: String) extends InEvent
 case class GenerateToken(player: Player) extends InEvent
+case class Ready(token: String) extends InEvent
 
 object Implicits {
   implicit val playerJoinedFormat = Json.format[PlayerJoined]
   implicit val generateTokenFormat = Json.format[GenerateToken]
+  implicit val readyFormat = Json.format[Ready]
 
-  implicit val requestNameFormat = Json.format[RequestName]
   implicit val notifyGameStateFormat = Json.format[NotifyGameState]
   implicit val okFormat = Json.format[Ok]
+  implicit val errFormat = Json.format[Err]
 
   implicit val inEventFormat = Json.format[InEvent]
   implicit val outEventFormat = Json.format[OutEvent]
@@ -46,18 +48,28 @@ class GameActor(out: ActorRef) extends Actor {
 
   override def receive: Receive = {
     case GenerateToken(player) => {
-      players += (player.token -> PlayerWithActor(player, sender))
-      logger.debug("Generated token for player")
-      requestName(player.token, sender)
+      if (players.size < 6) {
+        players += (player.token -> PlayerWithActor(player, sender))
+        logger.debug("Generated token for player")
+        sender ! Ok(player.token)
+      } else {
+        sender ! Err("Game is full!")
+      }
     }
     case PlayerJoined(name, token) => {
       if (game.state.players.exists(p => p.name == name)) {
-        requestName(token, sender)
+        sender ! Err("Name is not unique!")
       } else {
         players(token).player.name = name
         logger.debug(s"$name Joined")
         sender ! Ok(name)
         notifyGameState()
+      }
+    }
+    case Ready(token) => {
+      players(token).player.status = Status.Ready
+      if (players.size >= 3 && players.forall(p => p._2.player.status == Ready)) {
+        logger.debug("All players ready! Starting game!")
       }
     }
   }
@@ -66,10 +78,6 @@ class GameActor(out: ActorRef) extends Actor {
     for ((_, player) <- players) {
       player.actor ! NotifyGameState(game.state)
     }
-  }
-
-  def requestName(token: String, actor: ActorRef): Unit = {
-    actor ! RequestName(token)
   }
 }
 
