@@ -3,16 +3,14 @@ package models
 import play.api.libs.json._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 class Game(val state: GameState = new GameState()) {
 }
 
-class GameState() {
-  val players: Seq[Player] = ArrayBuffer()
-}
+case class GameState(gameCode: String = Random.nextInt(10000).toString,
+                     players: Seq[Player] = ArrayBuffer())
 
 object GameState {
-  implicit val stateWrites: Writes[GameState] = (passed: GameState) => Json.obj(
-    "players" -> Json.toJson(passed.players)
-  )
+  implicit val stateFormat = Json.format[GameState]
 }

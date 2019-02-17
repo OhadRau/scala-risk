@@ -1,27 +1,26 @@
 package models
 
-import play.api.libs.json.{JsValue, Json, Writes}
-import scala.language.postfixOps
+import play.api.libs.json._
 
+import scala.language.postfixOps
 import scala.util.Random
 
-class Player() {
-  val token: String = Random.alphanumeric take 16 mkString
-  var name: String = ""
-  var status: Status = Waiting()
+object Status extends Enumeration {
+  type Status = Value
+  val Waiting = Value("Waiting")
 }
+
+import Status._
+
+case class Player(var token: String = Random.alphanumeric take 16 mkString,
+                  var name: String = "",
+                  var status: Status = Waiting)
 
 object Player {
   def apply(): Player = {
     new Player()
   }
 
-  implicit val stateWrites = new Writes[Player] {
-    override def writes(player: Player): JsValue = Json.obj(
-      "name" -> player.name
-    )
-  }
+  implicit val statusFormat = Json.formatEnum(Status)
+  implicit val stateFormat = Json.format[Player]
 }
-
-trait Status
-case class Waiting() extends Status
