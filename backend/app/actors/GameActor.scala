@@ -10,6 +10,7 @@ import models._
 import play.api.libs.json.Json
 import play.api.mvc.WebSocket.MessageFlowTransformer
 
+// WARNING: Don't forget to add an implicit formatter if adding a new event!
 sealed trait OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
 case class Ok(msg: String) extends OutEvent
@@ -17,7 +18,7 @@ case class Err(msg: String) extends OutEvent
 
 sealed trait InEvent
 case class PlayerJoined(name: String, token: String) extends InEvent
-case class GenerateToken(player: Player) extends InEvent
+case class GenerateToken(gameCode: Int) extends InEvent
 case class Ready(token: String) extends InEvent
 
 object Implicits {
@@ -47,8 +48,10 @@ class GameActor(out: ActorRef) extends Actor {
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
-    case GenerateToken(player) => {
+    case GenerateToken(gameCode, _) => {
+      // TODO: Use the gameCode for something
       if (players.size < 6) {
+        val player = new Player()
         players += (player.token -> PlayerWithActor(player, sender))
         logger.debug("Generated token for player")
         sender ! Ok(player.token)
@@ -56,7 +59,7 @@ class GameActor(out: ActorRef) extends Actor {
         sender ! Err("Game is full!")
       }
     }
-    case PlayerJoined(name, token) => {
+    case PlayerJoined(name, token, _) => {
       if (game.state.players.exists(p => p.name == name)) {
         sender ! Err("Name is not unique!")
       } else {
@@ -66,7 +69,7 @@ class GameActor(out: ActorRef) extends Actor {
         notifyGameState()
       }
     }
-    case Ready(token) => {
+    case Ready(token, _) => {
       players(token).player.status = Status.Ready
       if (players.size >= 3 && players.forall(p => p._2.player.status == Ready)) {
         logger.debug("All players ready! Starting game!")
