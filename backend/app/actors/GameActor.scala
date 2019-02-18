@@ -48,7 +48,7 @@ class GameActor(out: ActorRef) extends Actor {
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
-    case GenerateToken(gameCode, _) => {
+    case GenerateToken(gameCode) => {
       // TODO: Use the gameCode for something
       if (players.size < 6) {
         val player = new Player()
@@ -59,7 +59,7 @@ class GameActor(out: ActorRef) extends Actor {
         sender ! Err("Game is full!")
       }
     }
-    case PlayerJoined(name, token, _) => {
+    case PlayerJoined(name, token) => {
       if (game.state.players.exists(p => p.name == name)) {
         sender ! Err("Name is not unique!")
       } else {
@@ -69,7 +69,7 @@ class GameActor(out: ActorRef) extends Actor {
         notifyGameState()
       }
     }
-    case Ready(token, _) => {
+    case Ready(token) => {
       players(token).player.status = Status.Ready
       if (players.size >= 3 && players.forall(p => p._2.player.status == Ready)) {
         logger.debug("All players ready! Starting game!")
