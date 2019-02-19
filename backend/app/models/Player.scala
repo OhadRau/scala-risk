@@ -13,9 +13,9 @@ object Status extends Enumeration {
 
 import Status._
 
-case class Player(var token: String = Random.alphanumeric take 16 mkString,
+case class Player(token: String = Random.alphanumeric take 16 mkString,
                   var name: String = "",
-                  var status: Status = Waiting)
+                  var status: Status = Waiting, var alive: Boolean = true)
 
 object Player {
   implicit val statusFormat = Json.formatEnum(Status)
