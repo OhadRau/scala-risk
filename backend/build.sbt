@@ -18,6 +18,8 @@ libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Tes
 libraryDependencies += "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.1" % Test
 libraryDependencies += "org.awaitility" % "awaitility" % "3.1.3" % Test
+libraryDependencies += "com.typesafe.akka" %% "akka-http-testkit" % "10.1.7" % Test
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.21" % Test
 
 scalacOptions ++= Seq(
   "-feature",
