@@ -1,0 +1,6 @@
+steps:
+  - name: ":hammer: Tests"
+    command: test
+    plugins:
+      - docker-compose#v2.6.0:
+          run: sbt
