@@ -15,7 +15,7 @@ import Status._
 
 case class Player(token: String = Random.alphanumeric take 16 mkString,
                   var name: String = "",
-                  var status: Status = Waiting, var alive: Boolean = true)
+                  var status: Status = Ready, var alive: Boolean = true, var unitCount: Int = 0)
 
 object Player {
   implicit val statusFormat = Json.formatEnum(Status)
