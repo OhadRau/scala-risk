@@ -68,7 +68,6 @@ object GameActor {
 class GameActor() extends Actor {
   implicit val timeout = Timeout(1 second)
 
-  private val game = new Game()
   val rooms: mutable.HashMap[String, Room] = collection.mutable.HashMap[String, Room]()
   val players: mutable.HashMap[String, PlayerWithActor] = collection.mutable.HashMap[String, PlayerWithActor]()
 
@@ -127,9 +126,9 @@ class GameActor() extends Actor {
       }
     case Ready(token) =>
       players(token).player.status = Status.Ready
-      if (players.size >= 3 && players.forall(p => p._2.player.status == Ready)) {
+      if (players.size >= 3 && players.forall(p => p._2.player.status == Status.Ready)) {
         logger.debug("All players ready! Starting game!")
-        // TODO: Actually start the game
+        startGame()
       }
     case _: KeepAliveTick =>
       logger.debug("Received keepalive")
@@ -148,6 +147,15 @@ class GameActor() extends Actor {
       pingClients()
     case Pong(token) =>
       players(token).player.alive = true
+  }
+
+  def startGame(): Unit = {
+    val (_, vals) = players.toSeq.unzip
+    var PlayerSeq = ArrayBuffer[Player]()
+    for (value <- vals) PlayerSeq += value.player
+    val game: Game = new Game(GameState(players = PlayerSeq))
+    game.initGame
+    //TODO: notify client about changes
   }
 
   def notifyPlayersChanged(): Unit = {
