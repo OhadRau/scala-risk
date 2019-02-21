@@ -11,9 +11,10 @@ import play.api.mvc.WebSocket.MessageFlowTransformer
 
 import scala.collection.mutable.ArrayBuffer
 
-// WARNING: Don't forget to add an implicit formatter if adding a new event!
+// Don't forget to add an implicit read for serializableInEvent and write for
+// outEvent!
 sealed trait OutEvent
-case class NotifyPlayersChanged(strings: Seq[String]) extends OutEvent
+case class NotifyClientsChanged(strings: Seq[String]) extends OutEvent
 case class NotifyRoomsChanged(rooms: Seq[RoomBrief]) extends OutEvent
 case class NotifyRoomStatus(roomStatus: RoomStatus) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
@@ -24,40 +25,40 @@ case class Kill(msg: String) extends OutEvent
 
 sealed trait InEvent
 sealed trait SerializableInEvent extends InEvent
-// Player first connected, give player token for identification
-case class RegisterPlayer(player: Player, actor: ActorRef) extends InEvent
-// Player first connected, give player token for identification
+// Client first connected, give client token for identification
+case class RegisterClient(client: Client, actor: ActorRef) extends InEvent
+// Client first connected, give client token for identification
 case class KeepAliveTick() extends InEvent
 // Client response to our ping
 case class Pong(token: String) extends SerializableInEvent
-// Player tries to assign name
+// Client tries to assign name
 case class AssignName(name: String, token: String) extends SerializableInEvent
-// Player tries to create room
+// Client tries to create room
 case class CreateRoom(roomName: String, token: String) extends SerializableInEvent
-// Player tries to join room
+// Client tries to join room
 case class JoinRoom(roomId: String, token: String) extends SerializableInEvent
-// Player marks himself ready
-case class Ready(token: String) extends SerializableInEvent
+// Client marks himself ready
+case class Ready(roomId: String, token: String) extends SerializableInEvent
 
 object SerializableInEvent {
-  implicit val assignNameFormat = Json.format[AssignName]
-  implicit val joinRoomFormat = Json.format[JoinRoom]
-  implicit val createRoomFormat = Json.format[CreateRoom]
-  implicit val readyFormat = Json.format[Ready]
-  implicit val pongFormat = Json.format[Pong]
-  implicit val serializableInEventFormat = Json.format[SerializableInEvent]
+  implicit val assignNameRead = Json.reads[AssignName]
+  implicit val joinRoomRead = Json.reads[JoinRoom]
+  implicit val createRoomRead = Json.reads[CreateRoom]
+  implicit val readyRead = Json.reads[Ready]
+  implicit val pongRead = Json.reads[Pong]
+  implicit val serializableInEventRead = Json.reads[SerializableInEvent]
 }
 object OutEvent {
-  implicit val notifyGameStateFormat = Json.format[NotifyGameState]
-  implicit val notifyPlayersChanged = Json.format[NotifyPlayersChanged]
-  implicit val notifyRoomsChanged = Json.format[NotifyRoomsChanged]
-  implicit val notifyRoomStatus = Json.format[NotifyRoomStatus]
-  implicit val okFormat = Json.format[Ok]
-  implicit val pingFormat = Json.format[Ping]
-  implicit val errFormat = Json.format[Err]
-  implicit val killFormat = Json.format[Kill]
+  implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
+  implicit val notifyClientsChangedWrite = Json.writes[NotifyClientsChanged]
+  implicit val notifyRoomsChangedWrite = Json.writes[NotifyRoomsChanged]
+  implicit val notifyRoomStatusWrite = Json.writes[NotifyRoomStatus]
+  implicit val okWrite = Json.writes[Ok]
+  implicit val pingWrite = Json.writes[Ping]
+  implicit val errWrite = Json.writes[Err]
+  implicit val killWrite = Json.writes[Kill]
 
-  implicit val outEventFormat = Json.format[OutEvent]
+  implicit val outEventFormat = Json.writes[OutEvent]
   implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[SerializableInEvent, OutEvent]
 }
 
@@ -69,102 +70,102 @@ class GameActor() extends Actor {
   implicit val timeout = Timeout(1 second)
 
   val rooms: mutable.HashMap[String, Room] = collection.mutable.HashMap[String, Room]()
-  val players: mutable.HashMap[String, PlayerWithActor] = collection.mutable.HashMap[String, PlayerWithActor]()
+  val clients: mutable.HashMap[String, ClientWithActor] = collection.mutable.HashMap[String, ClientWithActor]()
 
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
-    case RegisterPlayer(player, actor) =>
-      players += (player.token -> PlayerWithActor(player, actor))
-      logger.debug(s"Generated token ${player.token} for player!\n")
-      actor ! Ok(player.token)
+    case RegisterClient(client, actor) =>
+      clients += (client.token -> ClientWithActor(client, actor))
+      logger.debug(s"Generated token ${client.token} for client!\n")
+      actor ! Ok(client.token)
     case CreateRoom(roomName: String, token: String) =>
-      players.get(token) match {
-        case Some(playerActor) =>
-          if (playerActor.player.name != "") {
+      clients.get(token) match {
+        case Some(clientActor) =>
+          if (clientActor.client.name != "") {
             rooms.get(roomName) match {
               case Some(_) =>
-                logger.error(s"Player with token $token tried to create room with duplicate name $roomName")
-                playerActor.actor ! Err("A room with that name already exists")
+                logger.error(s"Client with token $token tried to create room with duplicate name $roomName")
+                clientActor.actor ! Err("A room with that name already exists")
               case None =>
-                val room = new Room(roomName, playerActor)
+                val room = new Room(roomName, clientActor)
                 rooms += (room.roomId -> room)
-                room.addPlayer(playerActor)
+                room.addClient(clientActor)
                 notifyRoomsChanged()
             }
           } else {
-            logger.error(s"Player with token $token tried to create a room, but had no name")
+            logger.error(s"Client with token $token tried to create a room, but had no name")
           }
         case None =>
-          logger.error(s"Player with invalid token $token")
+          logger.error(s"Client with invalid token $token")
       }
     case JoinRoom(roomId: String, token: String) =>
-      players.get(token) match {
-        case Some(playerActor) =>
+      clients.get(token) match {
+        case Some(clientActor) =>
           rooms.get(roomId) match {
             case Some(room) =>
-              if (room.players.size < 6) {
-                room.players += (playerActor.player.token -> playerActor)
-                logger.debug(s"Player ${playerActor.player.name} joined room $roomId")
-                playerActor.actor ! Ok(roomId)
+              if (room.clients.size < 6) {
+                room.clients += (clientActor.client.token -> clientActor)
+                logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
+                clientActor.actor ! Ok(roomId)
               } else {
-                playerActor.actor ! Err(s"Room $roomId is full!")
+                clientActor.actor ! Err(s"Room $roomId is full!")
               }
             case None =>
               logger.error(s"PLayer with token $token tried to join invalid room $roomId")
           }
         case None =>
-          logger.error(s"Player with invalid token $token")
+          logger.error(s"Client with invalid token $token")
       }
     case AssignName(name, token) =>
-      if (players.exists(_._2.player.name == name)) {
-        players(token).actor ! Err("Name is not unique!")
+      if (clients.exists(_._2.client.name == name)) {
+        clients(token).actor ! Err("Name is not unique!")
       } else {
-        players(token).player.name = name
-        logger.debug(s"$name assigned to player")
-        notifyPlayersChanged()
+        clients(token).client.name = name
+        logger.debug(s"$name assigned to client")
+        notifyClientsChanged()
       }
-    case Ready(token) =>
-      players(token).player.status = Status.Ready
-      if (players.size >= 3 && players.forall(p => p._2.player.status == Status.Ready)) {
-        logger.debug("All players ready! Starting game!")
-        startGame()
+    case Ready(roomId, token) =>
+      if (rooms(roomId).clients.contains(token)) {
+        clients(token).client.status = Status.Ready
+        if (rooms(roomId).clients.size >= 3 && clients.forall(p => p._2.client.status == Status.Ready)) {
+          logger.debug(s"Room $roomId is starting a game with ${rooms(roomId).clients.size} players!")
+          startGame(roomId)
+        }
       }
     case _: KeepAliveTick =>
       logger.debug("Received keepalive")
-      // Kill all players who haven't responded since the last keepalive
-      val deadClients = players.values.filter(p => !p.player.alive)
+      // Kill all clients who haven't responded since the last keepalive
+      val deadClients = clients.values.filter(p => !p.client.alive)
       // TODO: Handle killed clients?
-      for (playerWithActor <- deadClients) {
-        logger.debug(s"Killing ${playerWithActor.player.name} for inactivity")
-        playerWithActor.actor ! Kill("Killed for inactivity")
+      for (clientWithActor <- deadClients) {
+        logger.debug(s"Killing ${clientWithActor.client.name} for inactivity")
+        clientWithActor.actor ! Kill("Killed for inactivity")
       }
-      players.retain((_, playerWithActor) => playerWithActor.player.alive)
-      players.values.foreach(playerWithActor => playerWithActor.player.alive = false)
+      clients.retain((_, clientWithActor) => clientWithActor.client.alive)
+      clients.values.foreach(clientWithActor => clientWithActor.client.alive = false)
       if (deadClients.nonEmpty) {
-        notifyPlayersChanged()
+        notifyClientsChanged()
       }
       pingClients()
     case Pong(token) =>
-      players(token).player.alive = true
+      clients(token).client.alive = true
   }
 
-  def startGame(): Unit = {
-    val (_, vals) = players.toSeq.unzip
-    var PlayerSeq = ArrayBuffer[Player]()
-    for (value <- vals) PlayerSeq += value.player
-    val game: Game = new Game(GameState(players = PlayerSeq))
+  def startGame(roomId: String): Unit = {
+    val playerSeq = rooms(roomId).clients.values.map(client => new Player(client.client.name, client=Some(client))).toSeq
+    val game: Game = new Game(new GameState(players = playerSeq))
     game.initGame
-    //TODO: notify client about changes
+//    //TODO: notify client about changes
   }
 
-  def notifyPlayersChanged(): Unit = {
+  def notifyClientsChanged(): Unit = {
     val names = ArrayBuffer[String]()
-    for ((_, player) <- players) {
-      names += player.player.name
+    for ((_, client) <- clients) {
+      names += client.client.name
     }
-    for ((_, player) <- players) {
-      player.actor ! NotifyPlayersChanged(names)
+    for ((_, client) <- clients) {
+      client.actor ! NotifyClientsChanged(names)
     }
   }
 
@@ -173,23 +174,23 @@ class GameActor() extends Actor {
     for ((_, room) <- rooms) {
       roomBriefs += room.getBrief
     }
-    for ((_, player) <- players) {
-      player.actor ! NotifyRoomsChanged(roomBriefs)
+    for ((_, client) <- clients) {
+      client.actor ! NotifyRoomsChanged(roomBriefs)
     }
   }
 
   def notifyRoomStatus(room: Room): Unit = {
     val status = room.getStatus
-    for ((_, player) <- room.players) {
-      player.actor ! NotifyRoomStatus(status)
+    for ((_, client) <- room.clients) {
+      client.actor ! NotifyRoomStatus(status)
     }
   }
 
   def pingClients(): Unit = {
-    for ((_, player) <- players) {
-      player.actor ! Ping("Ping")
+    for ((_, client) <- clients) {
+      client.actor ! Ping("Ping")
     }
   }
 }
 
-case class PlayerWithActor(player: Player, actor: ActorRef)
+case class ClientWithActor(client: Client, actor: ActorRef)

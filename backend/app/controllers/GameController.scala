@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 import actors._
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
-import models.Player
+import models.Client
 
 import scala.concurrent.duration._
 
@@ -23,19 +23,19 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
   }
 
   private val gameActor = actorSystem.actorOf(Props(new GameActor))
-  private val playerActorSource = Source.actorRef[OutEvent](5, OverflowStrategy.fail)
+  private val clientActorSource = Source.actorRef[OutEvent](5, OverflowStrategy.fail)
 /**
 *                            +-------+
 *                            |       |
 *                            |       |
 *                            |       |     +----------------+    +------------+
 *              +---------+   |       |     |                | +->-|ActorRef   |
-*WebSocket+--->+playerMsg+-> |       |     |                |    +------------+
+*WebSocket+--->+clientMsg+-> |       |     |                |    +------------+
 *              +---------+   |       |     |                |
 *                            | Merge |     |                |    +------------+
 *                            |       +---->+ Sink  GameActor| +->-|ActorRef   |
 *+--------------------+      |       |     |                |    +------------+
-*|ActorRef for player | +--> |       |     |                |
+*|ActorRef for client | +--> |       |     |                |
 *|(Only on connection)|      |       |     |                |
 *+--------------------+      |       |     |                |     +----------+
 *                            |       |     |                | +-->-|ActorRef |
@@ -47,21 +47,21 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
 
 
 
-  private val gameFlow: Flow[InEvent, OutEvent, ActorRef] = Flow.fromGraph(GraphDSL.create(playerActorSource) {
-    implicit builder => playerActor =>
+  private val gameFlow: Flow[InEvent, OutEvent, ActorRef] = Flow.fromGraph(GraphDSL.create(clientActorSource) {
+    implicit builder => clientActor =>
       import GraphDSL.Implicits._
 
-      val materialization = builder.materializedValue.map(playerActorRef => RegisterPlayer(Player(), playerActorRef))
-      val playerMsg: FlowShape[InEvent, InEvent] = builder.add(Flow[InEvent])
+      val materialization = builder.materializedValue.map(clientActorRef => RegisterClient(Client(), clientActorRef))
+      val clientMsg: FlowShape[InEvent, InEvent] = builder.add(Flow[InEvent])
       val keepAliveSource: SourceShape[KeepAliveTick] = builder.add(Source.tick(10.seconds, 10.seconds, KeepAliveTick()))
       val merge = builder.add(Merge[InEvent](3))
       val gameActorSink = Sink.actorRef[InEvent](gameActor, None)
       materialization ~> merge
-      playerMsg ~> merge
+      clientMsg ~> merge
       keepAliveSource ~> merge
       merge ~> gameActorSink
 
-      FlowShape(playerMsg.in, playerActor.out)
+      FlowShape(clientMsg.in, clientActor.out)
   })
 }
 
