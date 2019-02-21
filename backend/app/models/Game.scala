@@ -11,8 +11,8 @@ class Game(val state: GameState = new GameState()) {
 
   def initGame: Unit = {
     for (player <- state.players) {
-      player.unitCount = N_PLAYERS_ARMY(state.players.length)
-      println(s"${player.name} got assigned ${player.unitCount} armies")
+      player.client.unitCount = N_PLAYERS_ARMY(state.players.length)
+      println(s"${player.name} got assigned ${player.client.unitCount} armies")
     }
   }
 }
