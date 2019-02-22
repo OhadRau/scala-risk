@@ -5,7 +5,7 @@ import akka.stream.{ActorMaterializer, FlowShape, OverflowStrategy, SourceShape}
 import play.api.mvc.{AbstractController, ControllerComponents, RequestHeader, WebSocket}
 import javax.inject._
 
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 import actors._
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
@@ -53,7 +53,8 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
 
       val materialization = builder.materializedValue.map(clientActorRef => RegisterClient(Client(), clientActorRef))
       val clientMsg: FlowShape[InEvent, InEvent] = builder.add(Flow[InEvent])
-      val keepAliveSource: SourceShape[KeepAliveTick] = builder.add(Source.tick(10.seconds, 10.seconds, KeepAliveTick()))
+      // TODO: Change this to outside the flow, so that only one for all clients
+      val keepAliveSource: SourceShape[KeepAliveTick] = builder.add(Source.tick(30 seconds, 30 seconds, KeepAliveTick()))
       val merge = builder.add(Merge[InEvent](3))
       val gameActorSink = Sink.actorRef[InEvent](gameActor, None)
       materialization ~> merge
