@@ -18,12 +18,15 @@ class Game(val state: GameState) {
   }
 }
 
-class GameState(val gameCode: String = Random.alphanumeric take 4 mkString, val players: Seq[Player] = ArrayBuffer()) {
+object Game {
+  def apply(players: Seq[Player]): Game = new Game(GameState(players))
+}
+
+class GameState(val players: Seq[Player] = ArrayBuffer()) {
 }
 
 object GameState {
   implicit val stateFormat = Json.writes[GameState]
-  def apply(gameCode: String, players: Seq[Player]): GameState = new GameState(gameCode, players)
-  def unapply(state: GameState): Option[(String, Seq[Player])] =
-    Some((state.gameCode, state.players))
+  def apply(players: Seq[Player]): GameState = new GameState(players)
+  def unapply(state: GameState): Option[Seq[Player]] = Some(state.players)
 }
