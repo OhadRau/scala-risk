@@ -10,6 +10,8 @@ import scala.language.postfixOps
 
 class RootActorSpec extends TestKitSpec with GivenWhenThen {
 
+  val logger = play.api.Logger(getClass)
+
   behavior of "RootActor"
   val numClients = 4
   val rootActor = system.actorOf(Props(new RootActor()))
@@ -60,9 +62,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
         case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
           rooms.head.name should be("testRoom")
           rooms.head.hostName should be(names(0))
-          rooms.head.clientStatus should have length 1
-          rooms.head.clientStatus.head.name should be (names(0))
-          rooms.head.clientStatus.head.status should be (Waiting())
+          rooms.head.numClients should be (1)
           roomId = rooms.head.roomId
       }
     })
@@ -76,22 +76,49 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     for (i <- 1 until numClients) {
       rootActor ! JoinRoom(roomId, tokens(i))
       joinedPlayers += names(i)
+      numJoined += 1
       for (j <- 0 until numClients) {
         if (i == j) {
           clients(j).expectMsg(Ok(roomId))
+        }
+        if (j <= i) {
+          clients(j).expectMsgPF() {
+            case NotifyRoomStatus(roomStatus: RoomStatus) =>
+              roomStatus.name should be("testRoom")
+              roomStatus.hostName should be(names(0))
+              roomStatus.clientStatus foreach (clientStatus => {
+                joinedPlayers should contain(clientStatus.name)
+                clientStatus.status should be(Waiting())
+              })
+          }
         }
         clients(j).expectMsgPF() {
           case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
             rooms.head.name should be("testRoom")
             rooms.head.hostName should be(names(0))
-            rooms.head.clientStatus foreach (clientStatus => {
-              joinedPlayers should contain(clientStatus.name)
-              clientStatus.status should be(Waiting())
-            })
+            rooms.head.numClients should equal (numJoined)
         }
       }
-      numJoined += 1
     }
+  }
+
+  it should "not allow a client who is not the host to start the game" in {
+    for (i <- 1 until numClients) {
+      rootActor ! StartGame(roomId, tokens(i))
+      clients(i).expectMsg(Err("You are not the host."))
+    }
+  }
+
+  it should "allow the host to start the game" in {
+    rootActor ! StartGame(roomId, tokens(0))
+    clients foreach (client => {
+      client.expectMsgPF() {
+        case NotifyGameStarted(state) => state.players foreach (player => {
+          names should contain (player.name)
+          player.unitCount should be ((10 - numClients) * 5)
+        })
+      }
+    })
   }
 
   it should "allow players to send Ready" in {
@@ -99,12 +126,12 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       rootActor ! ClientReady(roomId, tokens(i))
       clients foreach (client => {
         client.expectMsgPF() {
-          case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+          case NotifyRoomStatus(roomStatus: RoomStatus) =>
             for (j <- 0 until numClients) {
               if (j <= i) {
-                rooms.head.clientStatus(j).status should be (Ready())
+                roomStatus.clientStatus contains ClientStatus(names(j), Ready())
               } else {
-                rooms.head.clientStatus(j).status should be (Waiting())
+                roomStatus.clientStatus contains ClientStatus(names(j), Waiting())
               }
             }
         }

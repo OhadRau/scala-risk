@@ -8,14 +8,17 @@ import scala.util.Random
 
 
 class Game(val state: GameState) {
-  val N_PLAYERS_ARMY: Map[Int, Int] = Map((3, 35), (4, 30), (5, 25), (6, 20))
+  val N_PLAYERS_ARMY: Map[Int, Int] = Map(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
+  val logger = play.api.Logger(getClass)
 
   def initGame: Unit = {
     for (player <- state.players) {
       player.unitCount = N_PLAYERS_ARMY(state.players.length)
-      println(s"${player.name} got assigned ${player.unitCount} armies")
+      logger.debug(s"${player.name} got assigned ${player.unitCount} armies")
     }
   }
+
+  def players: Seq[Player] = state.players
 }
 
 object Game {

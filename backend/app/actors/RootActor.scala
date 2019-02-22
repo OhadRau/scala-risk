@@ -3,13 +3,14 @@ package actors
 import scala.collection.mutable
 import scala.language.postfixOps
 import scala.concurrent.duration._
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
+import scala.concurrent.ExecutionContext.Implicits.global
 import models._
 
 import scala.collection.mutable.ArrayBuffer
 
-case class ClientWithActor(client: Client, actor: ActorRef)
+case class ClientWithActor (client: Client, actor: ActorRef)
 
 // Don't forget to add an implicit read for serializableInEvent and write for
 // outEvent!
@@ -26,6 +27,10 @@ class RootActor() extends Actor {
   val clients: mutable.HashMap[String, ClientWithActor] = collection.mutable.HashMap[String, ClientWithActor]()
 
   val logger = play.api.Logger(getClass)
+
+  context.system.scheduler.schedule(
+    30 seconds, 30 seconds, self, KeepAliveTick()
+  )
 
   override def receive: Receive = {
     case msg: GameMsg =>
@@ -56,6 +61,9 @@ class RootActor() extends Actor {
 
     case ClientReady(roomId, token) =>
       ready(roomId, token)
+
+    case StartGame(roomId, token) =>
+      startGame(roomId, token)
 
     case _: KeepAliveTick =>
       checkAlive()
@@ -94,6 +102,7 @@ class RootActor() extends Actor {
               room.addClient(clientActor)
               logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
               clientActor.actor ! Ok(roomId)
+              notifyRoomStatus(room)
               notifyRoomsChanged()
             } else {
               clientActor.actor ! Err(s"Room $roomId is full!")
@@ -111,20 +120,30 @@ class RootActor() extends Actor {
       case Some(room) =>
         if (room.clients.contains(token)) {
           room.setReady(token)
-          if (room.clients.size >= 3 && room.statuses.values.forall(status => status == Ready())) {
-            logger.debug(s"Room $roomId is starting a game with ${room.clients.size} players!")
-            startGame(roomId)
-          }
+          notifyRoomStatus(room)
+          // TODO: Create start game message
+//          if (room.clients.size >= 3 && room.statuses.values.forall(status => status == Ready())) {
+//            logger.debug(s"Room $roomId is starting a game with ${room.clients.size} players!")
+//            startGame(roomId)
+//          }
         }
       case None => clients(token).actor ! Err("Cannot find roomId")
     }
   }
 
-  def startGame(roomId: String): Unit = {
-    val playerSeq = rooms(roomId).clients.values.map(client => new Player(client.client.name getOrElse "", client =
-      Some(client))).toSeq
-    val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
-    games += roomId -> gameActor
+  def startGame(roomId: String, token: String): Unit = {
+    rooms.get(roomId) match {
+      case Some(room) =>
+        if (room.host.client.token == token) {
+          val playerSeq = rooms(roomId).clients.values.map(client => new Player(client.client.name getOrElse "", client =
+            Some(client))).toSeq
+          val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
+          games += roomId -> gameActor
+        } else {
+          clients(token).actor ! Err("You are not the host.")
+        }
+      case None => clients(token).actor ! Err("That room does not exist.")
+    }
   }
 
   def notifyClientsChanged(): Unit = {

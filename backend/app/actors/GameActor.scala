@@ -11,6 +11,7 @@ object GameActor {
 class GameActor(players: Seq[Player]) extends Actor {
   val game = Game(players)
   game.initGame
+  game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
 
   override def receive: Receive = {
     case x => println(x)

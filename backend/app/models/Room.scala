@@ -17,31 +17,26 @@ class Room(roomName: String, var host: ClientWithActor) {
   val statuses: mutable.HashMap[String, Status] = collection.mutable.HashMap[String, Status]()
   val roomId: String = Random.alphanumeric take 16 mkString
 
-  def getStatus: RoomStatus = {
-    val names = ArrayBuffer[String]()
-    for ((_, client) <- clients) {
-      names += client.client.name getOrElse ""
-    }
-    RoomStatus(names)
+  def getStatus = {
+    RoomStatus(roomName, host.client.name getOrElse "", roomId, clients.values map (client =>
+      ClientStatus(client.client.name getOrElse "", statuses(client.client.token))) toSeq)
   }
 
   def setReady(token: String): Unit = {
     statuses(token) = Ready()
   }
 
-  def getBrief: RoomBrief = RoomBrief(roomName, host.client.name getOrElse "", roomId, clients.values map (client =>
-    ClientStatus(client.client.name getOrElse "", statuses(client.client.token))) toSeq)
+  def getBrief: RoomBrief = RoomBrief(roomName, host.client.name getOrElse "", roomId, clients.size)
 
   def addClient(client: ClientWithActor): Unit = {
     clients += client.client.token -> client
     statuses += client.client.token -> Waiting()
-    println(s"Added ${client.client.token} to the map")
   }
 }
 
-case class RoomStatus(clients: Seq[String])
+case class RoomStatus(name: String, hostName: String, roomId: String, clientStatus: Seq[ClientStatus])
 
-case class RoomBrief(name: String, hostName: String, roomId: String, clientStatus: Seq[ClientStatus])
+case class RoomBrief(name: String, hostName: String, roomId: String, numClients: Int)
 
 case class ClientStatus(name: String, status: Status = Waiting())
 
