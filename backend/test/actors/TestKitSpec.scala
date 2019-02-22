@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.ActorSystem
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestKit}
-import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpecLike}
+import org.scalatest._
 
 /**
   * This class provides any enclosed specs with an ActorSystem and an implicit sender.
@@ -12,8 +12,8 @@ import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpecLike}
 class TestKitSpec extends TestKit(ActorSystem("testkit"))
   with DefaultTimeout
   with ImplicitSender
-  with WordSpecLike
-  with MustMatchers
+  with FlatSpecLike
+  with Matchers
   with BeforeAndAfterAll {
 
   /**
