@@ -22,6 +22,12 @@ case class NotifyRoomsChanged(rooms: Seq[RoomBrief]) extends OutEvent
 
 case class NotifyRoomStatus(roomStatus: RoomStatus) extends OutEvent
 
+case class Token(token: String) extends OutEvent
+
+case class CreatedRoom(token: String) extends OutEvent
+
+case class JoinedRoom(token: String) extends OutEvent
+
 case class Ok(msg: String) extends OutEvent
 
 case class Err(msg: String) extends OutEvent
@@ -83,7 +89,10 @@ object OutEvent {
   implicit val notifyClientsChangedWrite = Json.writes[NotifyClientsChanged]
   implicit val notifyRoomsChangedWrite = Json.writes[NotifyRoomsChanged]
   implicit val notifyRoomStatusWrite = Json.writes[NotifyRoomStatus]
+  implicit val tokenWrite = Json.writes[Token]
   implicit val okWrite = Json.writes[Ok]
+  implicit val createdRoomWrite = Json.writes[CreatedRoom]
+  implicit val joinedRoomWrite = Json.writes[JoinedRoom]
   implicit val pingWrite = Json.writes[Ping]
   implicit val errWrite = Json.writes[Err]
   implicit val killWrite = Json.writes[Kill]

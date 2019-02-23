@@ -19,7 +19,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   var tokens = new Array[String](numClients)
   val names = new ArrayBuffer[String](numClients)
   var roomId = ""
-  it should "accept RegisterClient and reply with an Ok" in {
+  it should "accept RegisterClient and reply with a Token" in {
     for (i <- 0 until numClients) {
       clients(i) = TestProbe(s"client${i}")
     }
@@ -33,7 +33,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     Then("each client should receive a token")
     tokens = clients.map(client => {
       client.expectMsgPF() {
-        case Ok(token) => token
+        case Token(token) => token
       }
     })
 
@@ -57,13 +57,15 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
 
   it should "be able to create a room" in {
     rootActor ! CreateRoom("testRoom", tokens(0))
+    roomId = clients(0).expectMsgPF() {
+      case CreatedRoom(id) => id
+    }
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
           rooms.head.name should be("testRoom")
           rooms.head.hostName should be(names(0))
           rooms.head.numClients should be (1)
-          roomId = rooms.head.roomId
       }
     })
     println(s"roomId: $roomId")
@@ -79,7 +81,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       numJoined += 1
       for (j <- 0 until numClients) {
         if (i == j) {
-          clients(j).expectMsg(Ok(roomId))
+          clients(j).expectMsg(JoinedRoom(roomId))
         }
         if (j <= i) {
           clients(j).expectMsgPF() {
@@ -102,23 +104,9 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     }
   }
 
-  it should "not allow a client who is not the host to start the game" in {
-    for (i <- 1 until numClients) {
-      rootActor ! StartGame(roomId, tokens(i))
-      clients(i).expectMsg(Err("You are not the host."))
-    }
-  }
-
-  it should "allow the host to start the game" in {
+  it should "not allow the host to start without everyone being Ready" in {
     rootActor ! StartGame(roomId, tokens(0))
-    clients foreach (client => {
-      client.expectMsgPF() {
-        case NotifyGameStarted(state) => state.players foreach (player => {
-          names should contain (player.name)
-          player.unitCount should be ((10 - numClients) * 5)
-        })
-      }
-    })
+    clients(0).expectMsg(Err("Not everyone in the room is ready."))
   }
 
   it should "allow players to send Ready" in {
@@ -139,11 +127,38 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     }
   }
 
+  it should "not allow a client who is not the host to start the game" in {
+    for (i <- 1 until numClients) {
+      rootActor ! StartGame(roomId, tokens(i))
+      clients(i).expectMsg(Err("You are not the host."))
+    }
+  }
+
+  it should "allow the host to start the game" in {
+    rootActor ! StartGame(roomId, tokens(0))
+    clients foreach (client => {
+      client.expectMsgPF() {
+        case NotifyGameStarted(state) => state.players foreach (player => {
+          names should contain (player.name)
+          player.unitCount should be ((10 - numClients) * 5)
+        })
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be (0)
+      }
+      client.expectMsgPF() {
+        case NotifyGameStarted(state) => state.players foreach (player => {
+          names should contain (player.name)
+          player.unitCount should be ((10 - numClients) * 5)
+        })
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be (0)
+      }
+    })
+  }
+
   it should "kill idle clients" in {
     val sacrifice = TestProbe("sacrifice")
     rootActor ! RegisterClient(Client(), sacrifice.ref)
     val sacrificeToken = sacrifice.expectMsgPF() {
-      case Ok(token) => token
+      case Token(token) => token
     }
     rootActor ! AssignName("Sacrifice", sacrificeToken)
     sacrifice.expectMsgPF() {

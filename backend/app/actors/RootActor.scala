@@ -42,7 +42,7 @@ class RootActor() extends Actor {
     case RegisterClient(client, actor) =>
       clients += (client.token -> ClientWithActor(client, actor))
       logger.debug(s"Generated token ${client.token} for client!\n")
-      actor ! Ok(client.token)
+      actor ! Token(client.token)
 
     case CreateRoom(roomName: String, token: String) =>
       createRoom(roomName, token)
@@ -85,6 +85,7 @@ class RootActor() extends Actor {
             rooms += (room.roomId -> room)
             logger.debug(s"Created room with roomId ${room.roomId}")
             room.addClient(clientActor)
+            clientActor.actor ! CreatedRoom(room.roomId)
             notifyRoomsChanged()
         }
         case None => logger.error(s"Client with token $token tried to create a room, but had no name")
@@ -101,7 +102,7 @@ class RootActor() extends Actor {
             if (room.clients.size < 6) {
               room.addClient(clientActor)
               logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
-              clientActor.actor ! Ok(roomId)
+              clientActor.actor ! JoinedRoom(roomId)
               notifyRoomStatus(room)
               notifyRoomsChanged()
             } else {
@@ -135,10 +136,21 @@ class RootActor() extends Actor {
     rooms.get(roomId) match {
       case Some(room) =>
         if (room.host.client.token == token) {
-          val playerSeq = rooms(roomId).clients.values.map(client => new Player(client.client.name getOrElse "", client =
-            Some(client))).toSeq
-          val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
-          games += roomId -> gameActor
+          if (room.statuses.values.count(status => status == Waiting()) == 0) {
+            logger.debug("Starting Game!")
+            // Create new game
+            val playerSeq = rooms(roomId).clients.values.map(client => new Player(
+              client.client.name getOrElse "", client = Some(client))).toSeq
+            val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
+            games += roomId -> gameActor
+
+            // Remove room
+            rooms -= roomId
+
+            notifyRoomsChanged()
+          } else {
+            clients(token).actor ! Err("Not everyone in the room is ready.")
+          }
         } else {
           clients(token).actor ! Err("You are not the host.")
         }
