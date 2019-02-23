@@ -12,7 +12,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
 
   val logger = play.api.Logger(getClass)
 
-  behavior of "RootActor"
+  behavior of "Core Game Logic"
   val numClients = 4
   val rootActor = system.actorOf(Props(new RootActor()))
   var clients = new Array[TestProbe](numClients)
@@ -48,8 +48,8 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       rootActor ! AssignName(name, tokens(i))
       clients foreach (client => {
         client.expectMsgPF() {
-          case NotifyClientsChanged(clientsSeq: Seq[String]) =>
-            names foreach (nameInArray => clientsSeq should contain(nameInArray))
+          case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
+            names foreach (nameInArray => clientsSeq.exists(clientBrief => clientBrief.name == nameInArray))
         }
       })
     }
@@ -162,13 +162,13 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     }
     rootActor ! AssignName("Sacrifice", sacrificeToken)
     sacrifice.expectMsgPF() {
-      case NotifyClientsChanged(clientsSeq: Seq[String]) =>
-        clientsSeq should contain("Sacrifice")
+      case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
+        clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (true)
     }
     clients foreach (client => {
       client.expectMsgPF() {
-        case NotifyClientsChanged(clientsSeq: Seq[String]) =>
-          clientsSeq should contain("Sacrifice")
+        case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
+          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (true)
       }
     })
     When("a KeepAliveTick is received")
@@ -184,8 +184,8 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     rootActor ! KeepAliveTick()
     clients foreach (client => {
       client.expectMsgPF() {
-        case NotifyClientsChanged(clientsSeq: Seq[String]) =>
-          clientsSeq should not contain ("Sacrifice")
+        case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
+          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (false)
       }
     })
     And("the dropped client should receive a Kill message")

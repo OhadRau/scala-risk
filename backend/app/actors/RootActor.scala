@@ -26,6 +26,8 @@ class RootActor() extends Actor {
   val rooms: mutable.HashMap[String, Room] = collection.mutable.HashMap[String, Room]()
   val clients: mutable.HashMap[String, ClientWithActor] = collection.mutable.HashMap[String, ClientWithActor]()
 
+  val chatActor = context.actorOf(ChatActor.props(clients), "chatActor")
+
   val logger = play.api.Logger(getClass)
 
   context.system.scheduler.schedule(
@@ -38,6 +40,9 @@ class RootActor() extends Actor {
         case Some(gameActor) => gameActor forward msg
         case None => clients(msg.token).actor ! Err("No game with that id exists!")
       }
+
+    case msg: ChatMsg =>
+      chatActor forward msg
 
     case RegisterClient(client, actor) =>
       clients += (client.token -> ClientWithActor(client, actor))
@@ -159,9 +164,10 @@ class RootActor() extends Actor {
   }
 
   def notifyClientsChanged(): Unit = {
-    val names = ArrayBuffer[String]()
+    val names = new ArrayBuffer[ClientBrief](clients.size)
     for ((_, client) <- clients) {
-      names += client.client.name getOrElse ""
+      val test = ClientBrief(client.client.name getOrElse "", client.client.publicToken)
+      names += test
     }
     for ((_, client) <- clients) {
       client.actor ! NotifyClientsChanged(names)

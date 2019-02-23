@@ -1,12 +1,16 @@
 package actors
 
 import akka.actor.ActorRef
-import models.{Client, GameState, RoomBrief, RoomStatus}
+import models._
 import play.api.libs.json.Json
 import play.api.mvc.WebSocket.MessageFlowTransformer
 
 // Messages for which actor
 sealed trait RootMsg
+
+sealed trait ChatMsg
+case class MessageToUser(token: String, recipientPublic: String, message: String) extends SerializableInEvent with ChatMsg
+case class Message(senderName: String, message: String) extends OutEvent with ChatMsg
 
 sealed trait GameMsg {
   val token: String
@@ -16,7 +20,7 @@ sealed trait GameMsg {
 // Messages that are sent to the client
 sealed trait OutEvent
 
-case class NotifyClientsChanged(strings: Seq[String]) extends OutEvent
+case class NotifyClientsChanged(strings: Seq[ClientBrief]) extends OutEvent
 
 case class NotifyRoomsChanged(rooms: Seq[RoomBrief]) extends OutEvent
 
@@ -80,6 +84,7 @@ object SerializableInEvent {
   implicit val readyRead = Json.reads[ClientReady]
   implicit val startGameRead = Json.reads[StartGame]
   implicit val pongRead = Json.reads[Pong]
+  implicit val msgToUserRead = Json.reads[MessageToUser]
 
   implicit val testGameMsgRead = Json.reads[TestGameMsg]
   implicit val serializableInEventRead = Json.reads[SerializableInEvent]
@@ -96,6 +101,7 @@ object OutEvent {
   implicit val pingWrite = Json.writes[Ping]
   implicit val errWrite = Json.writes[Err]
   implicit val killWrite = Json.writes[Kill]
+  implicit val messageWrite = Json.writes[Message]
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
