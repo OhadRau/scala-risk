@@ -56,6 +56,11 @@ class RootActor() extends Actor {
     case JoinRoom(roomId: String, token: String) =>
       joinRoom(roomId, token)
 
+    case ListRoom(token: String) =>
+      sendRoomListing(token)
+
+    case CheckName(token: String, name: String) =>
+
     case AssignName(name, token) =>
       if (clients.exists(_._2.client.name.contains(name))) {
         clients(token).actor ! Err("Name is not unique!")
@@ -76,8 +81,29 @@ class RootActor() extends Actor {
 
     case Pong(token) =>
       clients(token).client.alive = true
+      logger.debug(s"Client $token Ponged.")
   }
 
+  def checkName(token: String, name: String): Unit = {
+    clients.get(token) match {
+      case Some(clientActor) =>
+        val available = !clients.exists(_._2.client.name == name)
+        clientActor.actor ! NameCheckResult(available, name)
+      case None =>
+        logger.error(s"Client with invalid token $token")
+    }
+  }
+
+  def sendRoomListing(token: String): Unit = {
+    clients.get(token) match {
+      case Some(clientActor) => {
+        notifyRoomsChanged(clientActor)
+        logger.info(s"Client $token requested room listing")
+      }
+      case None =>
+        logger.error(s"Client with invalid token $token")
+    }
+  }
 
   def createRoom(roomName: String, token: String): Unit = {
     clients.get(token) match {
@@ -175,13 +201,17 @@ class RootActor() extends Actor {
     }
   }
 
-  def notifyRoomsChanged(): Unit = {
+  def notifyRoomsChanged(client: ClientWithActor = null): Unit = {
     val roomBriefs = ArrayBuffer[RoomBrief]()
     for ((_, room) <- rooms) {
       roomBriefs += room.getBrief
     }
-    for ((_, client) <- clients) {
+    if (client != null) {
       client.actor ! NotifyRoomsChanged(roomBriefs)
+    } else {
+      for ((_, client) <- clients) {
+        client.actor ! NotifyRoomsChanged(roomBriefs)
+      }
     }
   }
 
@@ -193,7 +223,7 @@ class RootActor() extends Actor {
   }
 
   def checkAlive(): Unit = {
-    logger.debug("Received keepalive")
+    logger.debug("Checking Aliveness")
     // Kill all clients who haven't responded since the last keepalive
     val deadClients = clients.values.filter(p => !p.client.alive)
     // TODO: Handle killed clients?
