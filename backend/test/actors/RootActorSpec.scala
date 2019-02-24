@@ -41,6 +41,11 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     tokens.toSet should have size tokens.length
   }
 
+  it should "reject invalid names such as empty string" in {
+    rootActor ! AssignName("", tokens(0))
+    clients(0).expectMsg(Err("Name is not unique!"))
+  }
+
   it should "be able to assign names to a client and broadcast change to all clients" in {
     for (i <- 0 until numClients) {
       val name: String = ('A' + i).asInstanceOf[Char].toString

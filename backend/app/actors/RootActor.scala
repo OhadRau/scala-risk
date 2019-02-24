@@ -100,11 +100,11 @@ class RootActor() extends Actor {
     }
   }
 
-  def assignName(token: String, name: String): Unit = {
-    if (clients.values.exists(_.client.name.contains(name))) {
-      clients(token).actor ! Err("Name is not unique!")
+  def assignName(token: String, name: String)(implicit client: ClientWithActor): Unit = {
+    if (clients.values.exists(_.client.name.getOrElse("") == name)) {
+      client.actor ! Err("Name is not unique!")
     } else {
-      clients(token).client.name = Some(name)
+      client.client.name = Some(name)
       logger.debug(s"$name assigned to client")
       notifyClientsChanged()
     }
