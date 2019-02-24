@@ -26,7 +26,7 @@ class RootActor() extends Actor {
   val rooms: mutable.HashMap[String, Room] = collection.mutable.HashMap[String, Room]()
   val clients: mutable.HashMap[String, ClientWithActor] = collection.mutable.HashMap[String, ClientWithActor]()
 
-  val chatActor = context.actorOf(ChatActor.props(clients), "chatActor")
+  val chatActor = context.actorOf(ChatActor.props(clients, rooms), "chatActor")
 
   val logger = play.api.Logger(getClass)
 
@@ -34,6 +34,7 @@ class RootActor() extends Actor {
     30 seconds, 30 seconds, self, KeepAliveTick()
   )
 
+  // TODO: Refactor error checking somewhere
   override def receive: Receive = {
     case msg: GameMsg =>
       games.get(msg.gameId) match {

@@ -1,14 +1,19 @@
 package actors
 
-import akka.actor.{Actor, Props}
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-import scala.collection.mutable
+import akka.actor.{Actor, Props}
+import models.{Game, Room}
+
+import scala.collection.mutable.HashMap
 
 object ChatActor {
-  def props(clients: mutable.HashMap[String, ClientWithActor]) = Props(new ChatActor(clients))
+  def props(clients: HashMap[String, ClientWithActor], rooms: HashMap[String, Room]) =
+    Props(new ChatActor(clients, rooms))
 }
 
-class ChatActor(clients: mutable.HashMap[String, ClientWithActor]) extends Actor {
+class ChatActor(clients: HashMap[String, ClientWithActor], rooms: HashMap[String, Room]) extends Actor {
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
@@ -18,11 +23,25 @@ class ChatActor(clients: mutable.HashMap[String, ClientWithActor]) extends Actor
         case Some(client) =>
           clients.find(_._2.client.publicToken == publicToken) match {
             case Some((_, recipient)) =>
-              recipient.actor ! UserMessage(client.client.name getOrElse "", message)
-              client.actor ! UserMessage(client.client.name getOrElse "", message)
+              val time = LocalDateTime.now
+              recipient.actor ! UserMessage(client.client.name getOrElse "", message, time.toString)
+              client.actor ! UserMessage(client.client.name getOrElse "", message, time.toString)
             case None => sender() ! Err("Invalid recipient.")
           }
         case None => sender() ! Err("Invalid Token.")
+      }
+    case MessageToRoom(token, roomId, message: String) =>
+      clients.get(token) match {
+        case Some(sender) =>
+          rooms.get(roomId) match {
+            case Some(room) =>
+              val time = LocalDateTime.now
+              room.clients.values foreach (client => {
+                client.actor ! RoomMessage(sender.client.name getOrElse "", message, time.toString)
+              })
+            case None => sender.actor ! Err("Invalid room.")
+          }
+        case None => sender() ! Err("Invalid recipient.")
       }
   }
 }
