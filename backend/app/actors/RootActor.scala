@@ -76,14 +76,7 @@ class RootActor() extends Actor {
       case CreateRoom(roomName: String, token: String) => createRoom(roomName, token)
       case ListRoom(token: String) => sendRoomListing(token)
       case CheckName(token: String, name: String) => checkName(token, name)
-      case AssignName(name, token) =>
-        if (clients.exists(_._2.client.name.contains(name))) {
-          clients(token).actor ! Err("Name is not unique!")
-        } else {
-          clients(token).client.name = Some(name)
-          logger.debug(s"$name assigned to client")
-          notifyClientsChanged()
-        }
+      case AssignName(name, token) => assignName(token, name)
       case Pong(token) =>
         clients(token).client.alive = true
         logger.debug(s"Client $token Ponged.")
@@ -100,6 +93,16 @@ class RootActor() extends Actor {
       case _ =>
         logger.error(s"PLayer with token ${msg.token} tried to join invalid room ${msg.roomId}")
         sender() ! Err("No such room")
+    }
+  }
+
+  def assignName(token: String, name: String): Unit = {
+    if (clients.values.exists(_.client.name.contains(name))) {
+      clients(token).actor ! Err("Name is not unique!")
+    } else {
+      clients(token).client.name = Some(name)
+      logger.debug(s"$name assigned to client")
+      notifyClientsChanged()
     }
   }
 
