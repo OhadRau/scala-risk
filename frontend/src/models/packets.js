@@ -13,8 +13,8 @@ export class Ping {
 }
 
 export class Pong {
-  constructor () {
-    this.msg = 'Pong'
+  constructor (token) {
+    this.token = token
     this._type = 'actors.Pong'
   }
 }
@@ -26,6 +26,6 @@ export function processMessage (store, socket, message) {
       store.commit('GAME_SET_TOKEN', packet)
       break
     case 'actors.Ping':
-      socket.sendObj(new Pong())
+      socket.sendObj(new Pong(store.state.game.token))
   }
 }
