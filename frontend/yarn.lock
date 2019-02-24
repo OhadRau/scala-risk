@@ -673,6 +673,11 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
+"@deveodk/vue-toastr@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@deveodk/vue-toastr/-/vue-toastr-1.0.4.tgz#06e0cd6b84d07135f53b10e5a71b0da6fba40d06"
+  integrity sha512-HSkH2EEfJMYJoVdo4pFfJLLWvzKsz/QboLevey0/mlxjDYH+6BErm5Z7MrBNchzstC313C6Isu/Ru2pFlGpYhQ==
+
 "@iamstarkov/listr-update-renderer@0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@iamstarkov/listr-update-renderer/-/listr-update-renderer-0.4.1.tgz#d7c48092a2dcf90fd672b6c8b458649cb350c77e"
@@ -8473,6 +8478,11 @@ vue-native-websocket@^2.0.12:
   version "2.0.12"
   resolved "https://registry.yarnpkg.com/vue-native-websocket/-/vue-native-websocket-2.0.12.tgz#a60d424d28b277a47702a6f874785407f6a884ef"
   integrity sha512-6f5B2O/0H6XrUIOJwChiZk4t0XpFvjmHlWFUJrk9O0kU31E3MFPlWkC8VpsiFWQMPz7oB8XSwUhDmBbLxuvWDw==
+
+vue-notifications@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/vue-notifications/-/vue-notifications-0.9.0.tgz#7d25e19a5e4872442e3527f252007d538af4ba6e"
+  integrity sha512-stS61dn/xmMJOrt9JKn+FYBjuHeScAkhPB5zl/rEvVhtLnOWCLmFFDM62wW90YjQ1vsr+cK8DpH2QVPrTFNLAg==
 
 vue-router@^3.0.1:
   version "3.0.2"

@@ -21,7 +21,8 @@
           text-xs-center
           xs12
         >
-          © Copyright 2019 Dhruva Bansal, Michael Lidong Chen, Yaotian Feng, Hemang Rajvanshy, Ohad Shai Rau, Chun Man Oswin So
+          © Copyright 2019 Dhruva Bansal, Michael Lidong Chen, Yaotian Feng, Hemang Rajvanshy, Ohad Shai Rau, Chun Man
+          Oswin So
         </v-flex>
       </v-layout>
     </v-footer>
@@ -33,6 +34,7 @@
 
 <script>
 import {mapGetters} from 'vuex'
+import {processMessage} from './models/packets'
 
 export default {
   name: 'AppRoot',
@@ -40,6 +42,17 @@ export default {
     ...mapGetters([
       'navTitle'
     ])
+  },
+  methods: {},
+  created () {
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === 'SOCKET_ONOPEN') {
+        this.$toastr('success', 'Socket Open!')
+      } else if (mutation.type === 'SOCKET_ONMESSAGE') {
+        processMessage(this.$store, this.$socket, mutation.payload)
+        this.$toastr('info', JSON.stringify(mutation.payload), 'Socket Message:')
+      }
+    })
   }
 }
 </script>

@@ -7,8 +7,17 @@ import colors from 'vuetify/es5/util/colors'
 import VueNativeSock from 'vue-native-websocket'
 import 'vuetify/dist/vuetify.min.css'
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
+// Notification Setup
+// Include mini-toaster (or any other UI-notification library)
+import VueToastr from '@deveodk/vue-toastr'
+import '@deveodk/vue-toastr/dist/@deveodk/vue-toastr.css'
 
-Vue.use(VueNativeSock, 'ws://localhost:9000/ws', store)
+Vue.use(VueToastr, {
+  defaultPosition: 'toast-top-right',
+  defaultType: 'info',
+  defaultTimeout: 9999
+})
+Vue.use(VueNativeSock, 'ws://localhost:9000/ws', {store, format: 'json'})
 Vue.use(Vuetify, {
   theme: {
     primary: colors.indigo.darken2, // #E53935

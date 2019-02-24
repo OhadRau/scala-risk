@@ -12,7 +12,8 @@
                           prepend-icon="person"
                           v-model="name"
                           label="Enter Name"
-                          type="text" color="amber darken-2"></v-text-field>
+                          type="text" color="amber darken-2"
+                          :loading="gameToken === null"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -25,9 +26,12 @@
 </template>
 
 <script>
-
+import {mapGetters} from 'vuex'
 export default {
   name: 'home',
+  computed: {
+    ...mapGetters(['gameToken'])
+  },
   data () {
     return {
       name: ''
