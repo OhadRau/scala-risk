@@ -1,17 +1,14 @@
 package controllers
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.stream.{ActorMaterializer, FlowShape, OverflowStrategy, SourceShape}
+import akka.stream._
 import play.api.mvc.{AbstractController, ControllerComponents, RequestHeader, WebSocket}
 import javax.inject._
 
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 import actors._
-import akka.NotUsed
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
-import models.Player
-
-import scala.concurrent.duration._
+import models.Client
 
 class GameController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit val actorSystem: ActorSystem = ActorSystem()
@@ -22,20 +19,20 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
     gameFlow
   }
 
-  private val gameActor = actorSystem.actorOf(Props(new GameActor))
-  private val playerActorSource = Source.actorRef[OutEvent](5, OverflowStrategy.fail)
+  private val gameActor = actorSystem.actorOf(Props(new RootActor))
+  private val clientActorSource = Source.actorRef[OutEvent](5, OverflowStrategy.fail)
 /**
 *                            +-------+
 *                            |       |
 *                            |       |
 *                            |       |     +----------------+    +------------+
 *              +---------+   |       |     |                | +->-|ActorRef   |
-*WebSocket+--->+playerMsg+-> |       |     |                |    +------------+
+*WebSocket+--->+clientMsg+-> |       |     |                |    +------------+
 *              +---------+   |       |     |                |
 *                            | Merge |     |                |    +------------+
 *                            |       +---->+ Sink  GameActor| +->-|ActorRef   |
 *+--------------------+      |       |     |                |    +------------+
-*|ActorRef for player | +--> |       |     |                |
+*|ActorRef for client | +--> |       |     |                |
 *|(Only on connection)|      |       |     |                |
 *+--------------------+      |       |     |                |     +----------+
 *                            |       |     |                | +-->-|ActorRef |
@@ -45,23 +42,20 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
 *                            +-------+
 **/
 
-
-
-  private val gameFlow: Flow[InEvent, OutEvent, ActorRef] = Flow.fromGraph(GraphDSL.create(playerActorSource) {
-    implicit builder => playerActor =>
+  private val gameFlow = Flow.fromGraph(GraphDSL.create(clientActorSource) {
+    implicit builder => clientActor =>
       import GraphDSL.Implicits._
 
-      val materialization = builder.materializedValue.map(playerActorRef => RegisterPlayer(Player(), playerActorRef))
-      val playerMsg: FlowShape[InEvent, InEvent] = builder.add(Flow[InEvent])
-      val keepAliveSource: SourceShape[KeepAliveTick] = builder.add(Source.tick(10.seconds, 10.seconds, KeepAliveTick()))
-      val merge = builder.add(Merge[InEvent](3))
+      val materialization = builder.materializedValue.map(clientActorRef => RegisterClient(Client(), clientActorRef))
+      val clientMsg: FlowShape[InEvent, InEvent] = builder.add(Flow[InEvent])
+      // TODO: Change this to outside the flow, so that only one for all clients
+      val merge = builder.add(Merge[InEvent](2))
       val gameActorSink = Sink.actorRef[InEvent](gameActor, None)
       materialization ~> merge
-      playerMsg ~> merge
-      keepAliveSource ~> merge
+      clientMsg ~> merge
       merge ~> gameActorSink
 
-      FlowShape(playerMsg.in, playerActor.out)
+      FlowShape(clientMsg.in, clientActor.out)
   })
 }
 
