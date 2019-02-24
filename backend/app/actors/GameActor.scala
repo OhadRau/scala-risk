@@ -3,7 +3,6 @@ package actors
 import akka.actor.{Actor, Props}
 import models.{Game, Player}
 
-
 object GameActor {
   def props(players: Seq[Player]) = Props(new GameActor(players))
 }
