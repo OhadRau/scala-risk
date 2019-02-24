@@ -41,7 +41,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     tokens.toSet should have size tokens.length
   }
 
-  it should "be able to assign names to a client broadcast change to all clients" in {
+  it should "be able to assign names to a client and broadcast change to all clients" in {
     for (i <- 0 until numClients) {
       val name: String = ('A' + i).asInstanceOf[Char].toString
       names += name

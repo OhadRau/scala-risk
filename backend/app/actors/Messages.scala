@@ -5,19 +5,21 @@ import models._
 import play.api.libs.json.Json
 import play.api.mvc.WebSocket.MessageFlowTransformer
 
+sealed trait AuthenticatedMsg { val token: String }
+
 // Messages for which actor
 sealed trait RootMsg
+sealed trait AuthenticatedRootMsg extends RootMsg with AuthenticatedMsg
 
-sealed trait ChatMsg
+sealed trait RoomMsg extends AuthenticatedMsg { val roomId: String }
+
+sealed trait ChatMsg extends AuthenticatedMsg
 case class MessageToUser(token: String, recipientPublic: String, message: String) extends SerializableInEvent with ChatMsg
 case class MessageToRoom(token: String, roomId: String, message: String) extends SerializableInEvent with ChatMsg
-case class UserMessage(senderName: String, message: String, timestamp: String) extends OutEvent with ChatMsg
-case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent with ChatMsg
+case class UserMessage(senderName: String, message: String, timestamp: String) extends OutEvent
+case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent
 
-sealed trait GameMsg {
-  val token: String
-  val gameId: String
-}
+sealed trait GameMsg extends AuthenticatedMsg { val gameId: String }
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -63,27 +65,27 @@ case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with 
 case class KeepAliveTick() extends InEvent with RootMsg
 
 // Client request to list rooms
-case class ListRoom(token: String) extends SerializableInEvent with RootMsg
+case class ListRoom(token: String) extends SerializableInEvent with AuthenticatedRootMsg
 
 // Client request to validate a name's availability
-case class CheckName(token: String, name: String) extends SerializableInEvent with RootMsg
+case class CheckName(token: String, name: String) extends SerializableInEvent with AuthenticatedRootMsg
 
 // Client response to our ping
-case class Pong(token: String) extends SerializableInEvent with RootMsg
+case class Pong(token: String) extends SerializableInEvent with AuthenticatedRootMsg
 
 // Client tries to assign name
-case class AssignName(name: String, token: String) extends SerializableInEvent with RootMsg
+case class AssignName(name: String, token: String) extends SerializableInEvent with AuthenticatedRootMsg
 
 // Client tries to create room
-case class CreateRoom(roomName: String, token: String) extends SerializableInEvent with RootMsg
+case class CreateRoom(roomName: String, token: String) extends SerializableInEvent with AuthenticatedRootMsg
 
 // Client tries to join room
-case class JoinRoom(roomId: String, token: String) extends SerializableInEvent with RootMsg
+case class JoinRoom(roomId: String, token: String) extends SerializableInEvent with RoomMsg
 
 // Client marks himself ready
-case class ClientReady(roomId: String, token: String) extends SerializableInEvent with RootMsg
+case class ClientReady(roomId: String, token: String) extends SerializableInEvent with RoomMsg
 
-case class StartGame(roomId: String, token: String) extends SerializableInEvent with RootMsg
+case class StartGame(roomId: String, token: String) extends SerializableInEvent with RoomMsg
 
 case class TestGameMsg(gameId: String, token: String) extends SerializableInEvent with GameMsg
 
