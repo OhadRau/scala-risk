@@ -38,7 +38,8 @@ class RootActor() extends Actor {
   override def receive: Receive = {
     case msg: AuthenticatedMsg =>
       clients.get(msg.token) match {
-        case Some(_) =>
+        case Some(matchedClient) =>
+          implicit val client: ClientWithActor = matchedClient
           msg match {
             case a: GameMsg => handleGameMessage(a)
             case a: ChatMsg => handleChatMessage(a)
@@ -64,14 +65,15 @@ class RootActor() extends Actor {
     chatActor forward msg
   }
 
-  def handleGameMessage(msg: GameMsg): Unit = {
+  def handleGameMessage(msg: GameMsg)(implicit client: ClientWithActor): Unit = {
     games.get(msg.gameId) match {
       case Some(gameActor) => gameActor forward msg
-      case None => clients(msg.token).actor ! Err("No game with that id exists!")
+      case None => client.actor ! Err("No game with that id exists!")
     }
   }
 
-  def handleAuthenticatedRootMessage(authenticatedRootMsg: AuthenticatedRootMsg): Unit = {
+  def handleAuthenticatedRootMessage(authenticatedRootMsg: AuthenticatedRootMsg)(implicit client: ClientWithActor)
+  : Unit = {
     authenticatedRootMsg match {
       case CreateRoom(roomName: String, token: String) => createRoom(roomName, token)
       case ListRoom(token: String) => sendRoomListing(token)
@@ -83,13 +85,15 @@ class RootActor() extends Actor {
     }
   }
 
-  def handleRoomMsg(msg: RoomMsg): Unit = {
+  def handleRoomMsg(msg: RoomMsg)(implicit clientWithActor: ClientWithActor): Unit = {
     rooms.get(msg.roomId) match {
-      case Some(_) => msg match {
-        case JoinRoom(roomId, token) => joinRoom(roomId, token)
-        case StartGame(roomId, token) => startGame(roomId, token)
-        case ClientReady(roomId, token) => ready(roomId, token)
-      }
+      case Some(matchedRoom) =>
+        implicit val rooom: Room = matchedRoom
+        msg match {
+          case JoinRoom(roomId, token) => joinRoom(roomId, token)
+          case StartGame(roomId, token) => startGame(roomId, token)
+          case ClientReady(roomId, token) => ready(roomId, token)
+        }
       case _ =>
         logger.error(s"PLayer with token ${msg.token} tried to join invalid room ${msg.roomId}")
         sender() ! Err("No such room")
@@ -116,8 +120,7 @@ class RootActor() extends Actor {
     logger.info(s"Client $token requested room listing")
   }
 
-  def createRoom(roomName: String, token: String): Unit = {
-    val clientActor = clients(token)
+  def createRoom(roomName: String, token: String)(implicit clientActor: ClientWithActor): Unit = {
     clientActor.client.name match {
       case Some(_) => rooms.get(roomName) match {
         case Some(_) =>
@@ -135,9 +138,7 @@ class RootActor() extends Actor {
     }
   }
 
-  def joinRoom(roomId: String, token: String): Unit = {
-    val clientActor = clients(token)
-    val room = rooms(roomId)
+  def joinRoom(roomId: String, token: String)(implicit clientActor: ClientWithActor, room: Room): Unit = {
     if (room.clients.size < 6) {
       room.addClient(clientActor)
       logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
@@ -149,16 +150,14 @@ class RootActor() extends Actor {
     }
   }
 
-  def ready(roomId: String, token: String): Unit = {
-    val room = rooms(roomId)
+  def ready(roomId: String, token: String)(implicit room: Room): Unit = {
     if (room.clients.contains(token)) {
       room.setReady(token)
       notifyRoomStatus(room)
     }
   }
 
-  def startGame(roomId: String, token: String): Unit = {
-    val room = rooms(roomId)
+  def startGame(roomId: String, token: String)(implicit clientWithActor: ClientWithActor, room: Room): Unit = {
     if (room.host.client.token == token) {
       if (room.statuses.values.count(status => status == Waiting()) == 0) {
         logger.debug("Starting Game!")
@@ -173,10 +172,10 @@ class RootActor() extends Actor {
 
         notifyRoomsChanged()
       } else {
-        clients(token).actor ! Err("Not everyone in the room is ready.")
+        clientWithActor.actor ! Err("Not everyone in the room is ready.")
       }
     } else {
-      clients(token).actor ! Err("You are not the host.")
+      clientWithActor.actor ! Err("You are not the host.")
     }
   }
 
