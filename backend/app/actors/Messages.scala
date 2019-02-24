@@ -10,7 +10,7 @@ sealed trait RootMsg
 
 sealed trait ChatMsg
 case class MessageToUser(token: String, recipientPublic: String, message: String) extends SerializableInEvent with ChatMsg
-case class Message(senderName: String, message: String) extends OutEvent with ChatMsg
+case class UserMessage(senderName: String, message: String) extends OutEvent with ChatMsg
 
 sealed trait GameMsg {
   val token: String
@@ -101,7 +101,7 @@ object OutEvent {
   implicit val pingWrite = Json.writes[Ping]
   implicit val errWrite = Json.writes[Err]
   implicit val killWrite = Json.writes[Kill]
-  implicit val messageWrite = Json.writes[Message]
+  implicit val messageWrite = Json.writes[UserMessage]
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]

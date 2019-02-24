@@ -9,6 +9,8 @@ object ChatActor {
 }
 
 class ChatActor(clients: mutable.HashMap[String, ClientWithActor]) extends Actor {
+  val logger = play.api.Logger(getClass)
+
   override def receive: Receive = {
     // TODO: Not O(n) search
     case MessageToUser(token, publicToken, message: String) =>
@@ -16,8 +18,8 @@ class ChatActor(clients: mutable.HashMap[String, ClientWithActor]) extends Actor
         case Some(client) =>
           clients.find(_._2.client.publicToken == publicToken) match {
             case Some((_, recipient)) =>
-              recipient.actor ! Message(client.client.name getOrElse "", message)
-              sender() ! Message(client.client.name getOrElse "", message)
+              recipient.actor ! UserMessage(client.client.name getOrElse "", message)
+              client.actor ! UserMessage(client.client.name getOrElse "", message)
             case None => sender() ! Err("Invalid recipient.")
           }
         case None => sender() ! Err("Invalid Token.")

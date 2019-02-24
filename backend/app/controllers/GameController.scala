@@ -20,7 +20,7 @@ class GameController @Inject()(cc: ControllerComponents) extends AbstractControl
   }
 
   private val gameActor = actorSystem.actorOf(Props(new RootActor))
-  private val clientActorSource = Source.actorRef[OutEvent](5, OverflowStrategy.fail)
+  private val clientActorSource = Source.actorRef[OutEvent](50, OverflowStrategy.dropTail)
 /**
 *                            +-------+
 *                            |       |
