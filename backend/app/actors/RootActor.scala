@@ -58,7 +58,7 @@ class RootActor() extends Actor {
     case ListRoom(token: String) =>
       sendRoomListing(token)
 
-    case CheckName(token: String, name: String) =>
+    case CheckName(token: String, name: String) => checkName(token, name)
 
     case AssignName(name, token) =>
       if (clients.exists(_._2.client.name.contains(name))) {
@@ -86,7 +86,7 @@ class RootActor() extends Actor {
   def checkName(token: String, name: String): Unit = {
     clients.get(token) match {
       case Some(clientActor) =>
-        val available = !clients.exists(_._2.client.name == name)
+        val available = !clients.exists(_._2.client.name.contains(name))
         clientActor.actor ! NameCheckResult(available, name)
       case None =>
         logger.error(s"Client with invalid token $token")

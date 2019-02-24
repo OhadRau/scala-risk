@@ -11,6 +11,7 @@
     "@deveodk/vue-toastr": "^1.0.4",
     "material-design-icons-iconfont": "^4.0.5",
     "vue": "^2.6.6",
+    "vue-debounce": "^1.1.0",
     "vue-native-websocket": "^2.0.12",
     "vue-notifications": "^0.9.0",
     "vue-router": "^3.0.1",
