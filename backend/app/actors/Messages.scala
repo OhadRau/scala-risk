@@ -58,6 +58,8 @@ case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with 
 // Client first connected, give client token for identification
 case class KeepAliveTick() extends InEvent with RootMsg
 
+case class ListRoom(token: String) extends SerializableInEvent with RootMsg
+
 // Client response to our ping
 case class Pong(token: String) extends SerializableInEvent with RootMsg
 
@@ -84,6 +86,7 @@ object SerializableInEvent {
   implicit val readyRead = Json.reads[ClientReady]
   implicit val startGameRead = Json.reads[StartGame]
   implicit val pongRead = Json.reads[Pong]
+  implicit val listRoom = Json.reads[ListRoom]
   implicit val msgToUserRead = Json.reads[MessageToUser]
 
   implicit val testGameMsgRead = Json.reads[TestGameMsg]

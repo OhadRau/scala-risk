@@ -55,6 +55,9 @@ class RootActor() extends Actor {
     case JoinRoom(roomId: String, token: String) =>
       joinRoom(roomId, token)
 
+    case ListRoom(token: String) => sendRoomListing(token)
+
+
     case AssignName(name, token) =>
       if (clients.exists(_._2.client.name.contains(name))) {
         clients(token).actor ! Err("Name is not unique!")
@@ -78,6 +81,16 @@ class RootActor() extends Actor {
       logger.debug(s"Client $token Ponged.")
   }
 
+  def sendRoomListing(token: String): Unit = {
+    clients.get(token) match {
+      case Some(clientActor) => {
+        notifyRoomsChanged(clientActor)
+        logger.info(s"Client $token requested room listing")
+      }
+      case None =>
+        logger.error(s"Client with invalid token $token")
+    }
+  }
 
   def createRoom(roomName: String, token: String): Unit = {
     clients.get(token) match {
@@ -175,13 +188,17 @@ class RootActor() extends Actor {
     }
   }
 
-  def notifyRoomsChanged(): Unit = {
+  def notifyRoomsChanged(client: ClientWithActor = null): Unit = {
     val roomBriefs = ArrayBuffer[RoomBrief]()
     for ((_, room) <- rooms) {
       roomBriefs += room.getBrief
     }
-    for ((_, client) <- clients) {
+    if (client != null) {
       client.actor ! NotifyRoomsChanged(roomBriefs)
+    } else {
+      for ((_, client) <- clients) {
+        client.actor ! NotifyRoomsChanged(roomBriefs)
+      }
     }
   }
 
