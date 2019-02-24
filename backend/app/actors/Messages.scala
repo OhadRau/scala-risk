@@ -32,6 +32,8 @@ case class CreatedRoom(token: String) extends OutEvent
 
 case class JoinedRoom(token: String) extends OutEvent
 
+case class NameCheckResult(available: Boolean, name: String) extends OutEvent
+
 case class Ok(msg: String) extends OutEvent
 
 case class Err(msg: String) extends OutEvent
@@ -58,7 +60,11 @@ case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with 
 // Client first connected, give client token for identification
 case class KeepAliveTick() extends InEvent with RootMsg
 
+// Client request to list rooms
 case class ListRoom(token: String) extends SerializableInEvent with RootMsg
+
+// Client request to validate a name's availability
+case class CheckName(token: String, name: String) extends SerializableInEvent with RootMsg
 
 // Client response to our ping
 case class Pong(token: String) extends SerializableInEvent with RootMsg
@@ -86,8 +92,9 @@ object SerializableInEvent {
   implicit val readyRead = Json.reads[ClientReady]
   implicit val startGameRead = Json.reads[StartGame]
   implicit val pongRead = Json.reads[Pong]
-  implicit val listRoom = Json.reads[ListRoom]
+  implicit val listRoomRead = Json.reads[ListRoom]
   implicit val msgToUserRead = Json.reads[MessageToUser]
+  implicit val checkNameRead = Json.reads[CheckName]
 
   implicit val testGameMsgRead = Json.reads[TestGameMsg]
   implicit val serializableInEventRead = Json.reads[SerializableInEvent]
@@ -105,6 +112,7 @@ object OutEvent {
   implicit val errWrite = Json.writes[Err]
   implicit val killWrite = Json.writes[Kill]
   implicit val messageWrite = Json.writes[Message]
+  implicit val nameCheckResultWrite = Json.writes[NameCheckResult]
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]

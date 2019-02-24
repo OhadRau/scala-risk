@@ -55,8 +55,10 @@ class RootActor() extends Actor {
     case JoinRoom(roomId: String, token: String) =>
       joinRoom(roomId, token)
 
-    case ListRoom(token: String) => sendRoomListing(token)
+    case ListRoom(token: String) =>
+      sendRoomListing(token)
 
+    case CheckName(token: String, name: String) =>
 
     case AssignName(name, token) =>
       if (clients.exists(_._2.client.name.contains(name))) {
@@ -79,6 +81,16 @@ class RootActor() extends Actor {
     case Pong(token) =>
       clients(token).client.alive = true
       logger.debug(s"Client $token Ponged.")
+  }
+
+  def checkName(token: String, name: String): Unit = {
+    clients.get(token) match {
+      case Some(clientActor) =>
+        val available = !clients.exists(_._2.client.name == name)
+        clientActor.actor ! NameCheckResult(available, name)
+      case None =>
+        logger.error(s"Client with invalid token $token")
+    }
   }
 
   def sendRoomListing(token: String): Unit = {
