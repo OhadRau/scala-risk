@@ -101,7 +101,9 @@ class RootActor() extends Actor {
   }
 
   def assignName(token: String, name: String)(implicit client: ClientWithActor): Unit = {
-    if (clients.values.exists(_.client.name.getOrElse("") == name)) {
+    if (client.client.name.isDefined && client.client.name.getOrElse("") == name) {
+      client.actor ! Err("Name already assigned!")
+    } else if (clients.values.exists(_.client.name.getOrElse("") == name)) {
       client.actor ! Err("Name is not unique!")
     } else {
       client.client.name = Some(name)
