@@ -62,7 +62,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
 
   it should "reject multiple attempts to assign the same name to a client" in {
     rootActor ! AssignName("A", tokens(0))
-    clients(0).expectMsg(Err("Name is already assigned!"))
+    clients(0).expectMsg(Err("Name already assigned!"))
   }
 
   it should "be able to create a room" in {
