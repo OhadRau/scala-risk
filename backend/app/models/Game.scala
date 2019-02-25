@@ -11,8 +11,9 @@ import scala.util.Random
 class Game(val state: GameState) {
   val N_PLAYERS_ARMY: Map[Int, Int] = Map(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
   val logger = play.api.Logger(getClass)
-  var turnOrder: Seq[Player] = null;
-  def initGame: Unit = {
+  var turnOrder: Seq[Player] = players;
+
+  def initGame(): Unit = {
     turnOrder = assignTurnOrder(state.players)
 
     for (player <- state.players) {
@@ -23,8 +24,8 @@ class Game(val state: GameState) {
 
   def assignTurnOrder(array: Seq[Player]): Seq[Player] = {
     val turnOrder = Random.shuffle(array)
-    println(stringOf(turnOrder))
-    return turnOrder
+    logger.debug(stringOf(turnOrder))
+    turnOrder
   }
 
   def players: Seq[Player] = state.players

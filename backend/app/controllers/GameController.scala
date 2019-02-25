@@ -13,14 +13,15 @@ import models.Client
 class GameController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+  val bufferSize = 50
   val logger = play.api.Logger(getClass)
 
-  def ws = WebSocket.accept[SerializableInEvent, OutEvent] { request: RequestHeader =>
+  def ws: WebSocket = WebSocket.accept[SerializableInEvent, OutEvent] { _: RequestHeader =>
     gameFlow
   }
 
   private val gameActor = actorSystem.actorOf(Props(new RootActor))
-  private val clientActorSource = Source.actorRef[OutEvent](50, OverflowStrategy.dropTail)
+  private val clientActorSource = Source.actorRef[OutEvent](bufferSize, OverflowStrategy.dropTail)
 /**
 *                            +-------+
 *                            |       |
