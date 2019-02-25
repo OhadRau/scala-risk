@@ -71,11 +71,13 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     clients(1).expectMsgPF() {
       case msg: UserMessage =>
         msg.message should be(message)
+        msg.publicToken should be(publicToken(1))
         msg.senderName should be("B")
     }
     clients(0).expectMsgPF() {
       case msg: UserMessage =>
         msg.message should be(message)
+        msg.publicToken should be(publicToken(1))
         msg.senderName should be("B")
     }
   }
@@ -91,12 +93,14 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
       clients(1).expectMsgPF() {
         case msg: UserMessage =>
           msg.message should be(message)
+          msg.publicToken should be(publicToken(sender))
           msg.senderName should be(name)
-          clients(0).expectMsgPF() {
-            case msg: UserMessage =>
-              msg.message should be(message)
-              msg.senderName should be(name)
-          }
+      }
+      clients(0).expectMsgPF() {
+        case msg: UserMessage =>
+          msg.message should be(message)
+          msg.publicToken should be(publicToken(sender))
+          msg.senderName should be(name)
       }
     }
   }
@@ -164,8 +168,8 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
       clients foreach (client => {
         client.expectMsgPF() {
           case msg: RoomMessage =>
-            msg.message should be (message)
-            msg.senderName should be (name)
+            msg.message should be(message)
+            msg.senderName should be(name)
         }
       })
     }

@@ -16,7 +16,7 @@ sealed trait RoomMsg extends AuthenticatedMsg { val roomId: String }
 sealed trait ChatMsg extends AuthenticatedMsg
 case class MessageToUser(token: String, recipientPublic: String, message: String) extends SerializableInEvent with ChatMsg
 case class MessageToRoom(token: String, roomId: String, message: String) extends SerializableInEvent with ChatMsg
-case class UserMessage(senderName: String, message: String, timestamp: String) extends OutEvent
+case class UserMessage(senderName: String, publicToken: String, message: String, timestamp: String) extends OutEvent
 case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent
 
 sealed trait GameMsg extends AuthenticatedMsg { val gameId: String }
@@ -30,7 +30,7 @@ case class NotifyRoomsChanged(rooms: Seq[RoomBrief]) extends OutEvent
 
 case class NotifyRoomStatus(roomStatus: RoomStatus) extends OutEvent
 
-case class Token(token: String) extends OutEvent
+case class Token(token: String, publicToken: String) extends OutEvent
 
 case class CreatedRoom(token: String) extends OutEvent
 

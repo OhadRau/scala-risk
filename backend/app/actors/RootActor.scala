@@ -58,7 +58,7 @@ class RootActor() extends Actor {
   def handleRegisterClient(client: Client, actor: ActorRef): Unit = {
     clients += (client.token -> ClientWithActor(client, actor))
     logger.debug(s"Generated token ${client.token} for client!\n")
-    actor ! Token(client.token)
+    actor ! Token(client.token, client.publicToken)
   }
 
   def handleChatMessage(msg: ChatMsg): Unit = {
@@ -209,6 +209,10 @@ class RootActor() extends Actor {
       logger.debug(s"Killing ${clientWithActor.client.name} for inactivity")
       clientWithActor.actor ! Kill("Killed for inactivity")
     }
+    rooms.retain ((_, room) => {
+      room.clients.retain((_, clientWithActor) => clientWithActor.client.alive)
+      room.clients.nonEmpty
+    })
     clients.retain((_, clientWithActor) => clientWithActor.client.alive)
     clients.values.foreach(clientWithActor => clientWithActor.client.alive = false)
     if (deadClients.nonEmpty) {

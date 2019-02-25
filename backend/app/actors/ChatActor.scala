@@ -24,8 +24,8 @@ class ChatActor(clients: HashMap[String, ClientWithActor], rooms: HashMap[String
           clients.find(_._2.client.publicToken == publicToken) match {
             case Some((_, recipient)) =>
               val time = LocalDateTime.now
-              recipient.actor ! UserMessage(client.client.name getOrElse "", message, time.toString)
-              client.actor ! UserMessage(client.client.name getOrElse "", message, time.toString)
+              recipient.actor ! UserMessage(client.client.name getOrElse "", client.client.publicToken, message, time.toString)
+              client.actor ! UserMessage(client.client.name getOrElse "", client.client.publicToken, message, time.toString)
             case None => sender() ! Err("Invalid recipient.")
           }
         case None => sender() ! Err("Invalid Token.")

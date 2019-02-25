@@ -33,7 +33,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     Then("each client should receive a token")
     tokens = clients.map(client => {
       client.expectMsgPF() {
-        case Token(token) => token
+        case Token(token, publicToken) => token
       }
     })
 
@@ -168,7 +168,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     val sacrifice = TestProbe("sacrifice")
     rootActor ! RegisterClient(Client(), sacrifice.ref)
     val sacrificeToken = sacrifice.expectMsgPF() {
-      case Token(token) => token
+      case Token(token, publicToken) => token
     }
     rootActor ! AssignName("Sacrifice", sacrificeToken)
     sacrifice.expectMsgPF() {
