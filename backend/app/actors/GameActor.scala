@@ -15,6 +15,6 @@ class GameActor(players: Seq[Player]) extends Actor {
   game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
 
   override def receive: Receive = {
-    case x => logger.debug(x)
+    case x => logger.debug(x.toString)
   }
 }

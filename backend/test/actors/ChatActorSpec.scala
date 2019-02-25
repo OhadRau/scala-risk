@@ -35,7 +35,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     And("and have tokens")
     tokens = clients.map(client => {
       client.expectMsgPF() {
-        case Token(token) => token
+        case Token(token, publicToken) => token
       }
     })
 
@@ -110,7 +110,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     clients append TestProbe("client3")
     rootActor ! RegisterClient(Client(), clients(2).ref)
     tokens append clients(2).expectMsgPF() {
-      case Token(token) => token
+      case Token(token, publicToken) => token
     }
 
     rootActor ! AssignName("C", tokens(2))
