@@ -21,7 +21,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   var roomId = ""
   it should "accept RegisterClient and reply with a Token" in {
     for (i <- 0 until numClients) {
-      clients(i) = TestProbe(s"client${i}")
+      clients(i) = TestProbe(s"client$i")
     }
 
     When("the clients are added")
@@ -78,7 +78,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
           rooms.head.numClients should be (1)
       }
     })
-    println(s"roomId: $roomId")
+    logger.debug(s"roomId: $roomId")
   }
 
   it should "be able to allow players to join the room" in {

@@ -17,7 +17,7 @@ class Room(roomName: String, var host: ClientWithActor) {
   val statuses: mutable.HashMap[String, Status] = collection.mutable.HashMap[String, Status]()
   val roomId: String = Random.alphanumeric take 16 mkString
 
-  def getStatus = {
+  def getStatus: RoomStatus = {
     RoomStatus(roomName, host.client.name getOrElse "", roomId, clients.values map (client =>
       ClientStatus(client.client.name getOrElse "", statuses(client.client.token))) toSeq)
   }

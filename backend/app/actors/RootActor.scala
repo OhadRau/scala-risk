@@ -16,7 +16,7 @@ case class ClientWithActor(client: Client, actor: ActorRef)
 // outEvent!
 
 object RootActor {
-  def props() = Props(new RootActor())
+  def props(): Props = Props(new RootActor())
 }
 
 class RootActor() extends Actor {
