@@ -32,6 +32,14 @@ export class NotifyClientsChanged {
   }
 }
 
+export class RoomStatusUpdate {
+  constructor (other) {
+    this.roomName = other.roomStatus.name
+    this.roomId = other.roomStatus.roomId
+    this.clientStatus = other.roomStatus.clientStatus
+  }
+}
+
 export class NameAssignResult {
   constructor (other) {
     this.success = other.success
@@ -63,7 +71,7 @@ export class CreatedRoom {
 export class JoinedRoom {
   constructor (other) {
     this.roomId = other.token
-    this.playerId = other.playerId
+    this.playerToken = other.playerToken
   }
 }
 
@@ -121,11 +129,17 @@ export function processMessage (store, socket, toastr, message) {
     case 'actors.CreatedRoom':
       store.commit(types.GAME_ROOM_CREATED, new CreatedRoom(message))
       break
+    case 'actors.JoinedRoom':
+      store.commit(types.GAME_ROOM_JOIN, new JoinedRoom(message))
+      break
     case 'actors.RoomCreationResult':
       store.commit(types.GAME_ROOM_CREATION_RESULT_OCCURRED, new RoomCreationResult(message))
       break
     case 'actors.NotifyClientsChanged':
       store.commit(types.GAME_PLAYER_LIST_CHANGED, new NotifyClientsChanged(message))
+      break
+    case 'actors.NotifyRoomStatus':
+      store.commit(types.GAME_ROOM_STATUS_CHANGED, new RoomStatusUpdate(message))
       break
     case 'actors.NameAssignResult':
       const nameAssignmentResult = new NameAssignResult(message)

@@ -3,12 +3,13 @@
     <div v-if="players.length">
       <v-list-tile
         v-for="player in players"
-        :key="player.id"
-        @click=""
+        :key="player.publicToken"
+        @click="() => {onClickPlayer(player.publicToken)}"
       >
         <!--TODO: Click Handler-->
         <v-list-tile-content>
           <v-list-tile-title v-text="player.name"></v-list-tile-title>
+          <v-list-tile-sub-title v-if="player.publicToken === keyToken">(Me)</v-list-tile-sub-title>
         </v-list-tile-content>
       </v-list-tile>
       <v-divider></v-divider>
@@ -27,6 +28,14 @@ export default {
     players: {
       type: Array,
       default () { return [] }
+    },
+    keyToken: {
+      type: String,
+      default () { return null }
+    },
+    onClickPlayer: {
+      type: Function,
+      default () { return () => {} }
     }
   }
 }

@@ -9,6 +9,7 @@ export const types = {
   GAME_ROOM_CREATION_RESULT_OCCURRED: 'GAME_ROOM_CREATION_RESULT_OCCURRED',
   GAME_ROOM_CREATED: 'GAME_ROOM_CREATED',
   GAME_ROOM_JOIN: 'GAME_ROOM_JOIN',
+  GAME_ROOM_STATUS_CHANGED: 'GAME_ROOM_STATUS_CHANGED',
   GAME_PLAYER_LIST_CHANGED: 'GAME_PLAYER_LIST_CHANGED'
 }
 const state = {
@@ -19,44 +20,57 @@ const state = {
     valid: null,
     committed: false
   },
-  joinedRoom: null,
+  joinedRoom: {
+    name: '',
+    roomId: null,
+    clientStatus: []
+  },
   rooms: [],
   players: []
 }
 const mutations = {
-  [types.SET_TOKEN] (state, token) {
+  [ types.SET_TOKEN ] (state, token) {
     state.token = token.token
     state.publicToken = token.publicToken
   },
-  [types.GAME_ROOMS_CHANGED] (state, roomChangePacket) {
+  [ types.GAME_ROOMS_CHANGED ] (state, roomChangePacket) {
     state.rooms = roomChangePacket.rooms
-    if (this.joinedRoom !== null &&
-      !state.rooms.some((item) => {
-        return item.roomId === state.joinedRoom
-      })) {
-      state.joinedRoom = null
-    }
+    // TODO: Implement Room Kicking
+    // if (this.joinedRoom !== null &&
+    //   !state.rooms.some((item) => {
+    //     return item.roomId === state.joinedRoom.roomId
+    //   })) {
+    //   state.joinedRoom = null
+    // }
   },
-  [types.SET_GAME_NAME] (state, name) {
+  [ types.SET_GAME_NAME ] (state, name) {
     state.displayName.name = name
     if (name !== state.displayName.name) {
       state.displayName.valid = null
     }
   },
-  [types.VALIDATE_GAME_NAME] (state, result) {
+  [ types.VALIDATE_GAME_NAME ] (state, result) {
     state.displayName.valid = result
   },
-  [types.COMMIT_GAME_NAME] (state, commitResult) {
+  [ types.COMMIT_GAME_NAME ] (state, commitResult) {
     state.displayName.committed = commitResult.success
   },
-  [types.GAME_ROOM_CREATION_RESULT_OCCURRED] (state, result) {
+  [ types.GAME_ROOM_CREATION_RESULT_OCCURRED ] (state, result) {
   },
-  [types.GAME_ROOM_CREATED] (state, result) {
+  [ types.GAME_ROOM_CREATED ] (state, result) {
   },
-  [types.GAME_ROOM_JOIN] (state, roomJoin) {
-    state.joinedRoom = roomJoin.roomId
+  [ types.GAME_ROOM_STATUS_CHANGED ] (state, updatePacket) {
+    if (state.joinedRoom.roomId === updatePacket.roomId) {
+      state.joinedRoom.name = updatePacket.roomName
+      state.joinedRoom.clientStatus = updatePacket.clientStatus
+    }
   },
-  [types.GAME_PLAYER_LIST_CHANGED] (state, change) {
+  [ types.GAME_ROOM_JOIN ] (state, roomJoin) {
+    if (roomJoin.playerToken === state.publicToken) {
+      state.joinedRoom.roomId = roomJoin.roomId
+    }
+  },
+  [ types.GAME_PLAYER_LIST_CHANGED ] (state, change) {
     state.players = change.players
   }
 }

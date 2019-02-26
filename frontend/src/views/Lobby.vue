@@ -1,10 +1,25 @@
 <template>
   <v-layout row wrap>
-    <v-flex xs12 sm6 md4 lg3 xl2>
+    <v-flex xs12 sm6 md4 lg3 xl2 pa-1>
       <RoomList/>
     </v-flex>
-    <v-flex xs12 sm6 md4 lg4 xl2 v-if="true || joinedRoom !== null">
-      <PlayerList/>
+    <v-flex  xs12 sm6 md4 lg4 xl2 pa-1 v-if="joinedRoom.roomId !== null">
+      <v-card>
+        <v-toolbar>
+          <v-toolbar-title>Players in Room {{joinedRoom.name}}</v-toolbar-title>
+          <v-spacer/>
+        </v-toolbar>
+        <PlayerList :players="currentRoomPlayerList" :key-token="gamePublicToken"/>
+      </v-card>
+    </v-flex>
+    <v-flex xs12 sm6 md4 lg4 xl2 pa-1>
+      <v-card>
+        <v-toolbar>
+          <v-toolbar-title>Players</v-toolbar-title>
+          <v-spacer/>
+        </v-toolbar>
+        <PlayerList :players="playerList" :key-token="gamePublicToken"/>
+      </v-card>
     </v-flex>
   </v-layout>
 </template>
@@ -13,11 +28,29 @@
 
 import RoomList from '@/components/Lobby/RoomList'
 import PlayerList from '../components/Lobby/PlayerList'
+import {mapGetters} from 'vuex'
+
 export default {
   name: 'Lobby',
+  beforeMount () {
+    if (this.$store.state.game.displayName.name === null || this.$store.state.game.displayName.name.length === 0) {
+      this.$router.replace({name: 'home'})
+    }
+  },
+  methods: {
+    findRoomNameById (roomId) {
+    }
+  },
   computed: {
+    ...mapGetters([ 'gamePublicToken' ]),
     joinedRoom () {
       return this.$store.state.game.joinedRoom
+    },
+    currentRoomPlayerList () {
+      return this.joinedRoom.clientStatus
+    },
+    playerList () {
+      return this.$store.state.game.players
     }
   },
   components: {PlayerList, RoomList}

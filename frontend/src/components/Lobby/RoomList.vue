@@ -17,6 +17,7 @@
           <!--TODO: Click Handler-->
           <v-list-tile-content>
             <v-list-tile-title v-text="room.name"></v-list-tile-title>
+            <v-list-tile-sub-title v-text="playerCountString(room)"></v-list-tile-sub-title>
           </v-list-tile-content>
         </v-list-tile>
         <v-divider></v-divider>
@@ -97,6 +98,9 @@ export default {
         this.roomCreationProgress = 'waiting'
         this.$store.dispatch('gameCreateRoom', {socket: this.$socket, name: this.roomCreationName})
       }
+    },
+    playerCountString (room) {
+      return `Player Count: ${room.numClients}`
     }
   },
   name: 'RoomList'
