@@ -1,0 +1,7 @@
+version: '3'
+services:
+  backend:
+    build: ./backend
+    command: ["sbt", "test"]
+    ports:
+      - "9000:9000"

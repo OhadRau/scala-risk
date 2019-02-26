@@ -8,4 +8,4 @@ COPY . /backend
 WORKDIR /backend
 
 RUN sbt compile
-CMD ["sbt", "test"]
+CMD ["sbt", "run"]

@@ -4,3 +4,4 @@ steps:
     plugins:
       - docker-compose#v2.6.0:
           run: backend
+          config: docker-compose.test.yml
