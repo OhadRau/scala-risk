@@ -1,10 +1,9 @@
 package models
 
-import actors.ClientWithActor
-import play.api.libs.json.{Json, OFormat, Writes}
+import actors.{ClientWithActor, JoinedRoom}
+import play.api.libs.json.Json
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 import scala.util.Random
 
@@ -31,6 +30,8 @@ class Room(roomName: String, var host: ClientWithActor) {
   def addClient(client: ClientWithActor): Unit = {
     clients += client.client.token -> client
     statuses += client.client.token -> Waiting()
+    val joinedMessage= JoinedRoom(roomId, client.client.publicToken)
+    clients.values.foreach(_.actor ! joinedMessage)
   }
 }
 

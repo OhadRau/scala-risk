@@ -102,11 +102,12 @@ class RootActor() extends Actor {
 
   def assignName(token: String, name: String)(implicit client: ClientWithActor): Unit = {
     if (client.client.name.isDefined && client.client.name.getOrElse("") == name) {
-      client.actor ! Err("Name already assigned!")
+      client.actor ! NameAssignResult(success = false, name, "Name already assigned!")
     } else if (clients.values.exists(_.client.name.getOrElse("") == name)) {
-      client.actor ! Err("Name is not unique!")
+      client.actor ! NameAssignResult(success = false, name, "Name is not unique!")
     } else {
       client.client.name = Some(name)
+      client.actor ! NameAssignResult(success = true, name)
       logger.debug(s"$name assigned to client")
       notifyClientsChanged()
     }
@@ -127,7 +128,7 @@ class RootActor() extends Actor {
       case Some(_) => rooms.get(roomName) match {
         case Some(_) =>
           logger.error(s"Client with token $token tried to create room with duplicate name $roomName")
-          clientActor.actor ! Err("A room with that name already exists")
+          clientActor.actor ! RoomCreationResult(success = false, "A room with that name already exists")
         case None =>
           val room = new Room(roomName, clientActor)
           rooms += (room.roomId -> room)
@@ -136,7 +137,9 @@ class RootActor() extends Actor {
           clientActor.actor ! CreatedRoom(room.roomId)
           notifyRoomsChanged()
       }
-      case None => logger.error(s"Client with token $token tried to create a room, but had no name")
+      case None =>
+        logger.error(s"Client with token $token tried to create a room, but had no name")
+        clientActor.actor ! RoomCreationResult(success = false, s"Client with token $token tried to create a room, but had no name")
     }
   }
 
