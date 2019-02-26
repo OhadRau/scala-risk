@@ -1,35 +1,46 @@
-import {ListRoom, CheckName, AssignName} from '@/models/packets'
+import {ListRoom, CheckName, AssignName, CreateRoom} from '@/models/packets'
 
-const types = {
+export const types = {
   SET_TOKEN: 'GAME_SET_TOKEN',
   GAME_ROOMS_CHANGED: 'GAME_ROOMS_CHANGED',
   SET_GAME_NAME: 'SET_GAME_NAME',
-  VALIDATE_GAME_NAME: 'VALIDATE_GAME_NAME'
+  VALIDATE_GAME_NAME: 'VALIDATE_GAME_NAME',
+  COMMIT_GAME_NAME: 'COMMIT_GAME_NAME',
+  GAME_ROOM_CREATION_RESULT_OCCURRED: 'GAME_ROOM_CREATION_RESULT_OCCURRED',
+  GAME_ROOM_CREATED: 'GAME_ROOM_CREATED'
 }
 const state = {
   token: null,
   displayName: {
     name: '',
-    valid: null
+    valid: null,
+    committed: false
   },
   rooms: [],
   players: []
 }
 const mutations = {
-  [ types.SET_TOKEN ] (state, token) {
+  [types.SET_TOKEN] (state, token) {
     state.token = token.token
   },
-  [ types.GAME_ROOMS_CHANGED ] (state, roomChangePacket) {
+  [types.GAME_ROOMS_CHANGED] (state, roomChangePacket) {
     state.rooms = roomChangePacket.rooms
   },
-  [ types.SET_GAME_NAME ] (state, name) {
+  [types.SET_GAME_NAME] (state, name) {
     state.displayName.name = name
     if (name !== state.displayName.name) {
       state.displayName.valid = null
     }
   },
-  [ types.VALIDATE_GAME_NAME ] (state, result) {
+  [types.VALIDATE_GAME_NAME] (state, result) {
     state.displayName.valid = result
+  },
+  [types.COMMIT_GAME_NAME] (state, commitResult) {
+    state.displayName.committed = commitResult.success
+  },
+  [types.GAME_ROOM_CREATION_RESULT_OCCURRED] (state, result) {
+  },
+  [types.GAME_ROOM_CREATED] (state, result) {
   }
 }
 const getters = {
@@ -53,6 +64,9 @@ const actions = {
   },
   gameAssignName ({commit, dispatch, state}, {socket}) {
     socket.sendObj(new AssignName(state.token, state.displayName.name))
+  },
+  gameCreateRoom ({commit, dispatch, state}, {socket, name}) {
+    socket.sendObj(new CreateRoom(state.token, name))
   }
 }
 
