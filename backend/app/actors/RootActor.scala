@@ -134,8 +134,9 @@ class RootActor() extends Actor {
           rooms += (room.roomId -> room)
           logger.debug(s"Created room with roomId ${room.roomId}")
           clientActor.actor ! CreatedRoom(room.roomId)
-          notifyRoomsChanged()
           room.addClient(clientActor)
+          notifyRoomsChanged()
+          notifyRoomStatus(room, Some(clientActor))
       }
       case None =>
         logger.error(s"Client with token $token tried to create a room, but had no name")
@@ -184,7 +185,7 @@ class RootActor() extends Actor {
   }
 
   def notifyClientsChanged(): Unit = {
-    val names = clients.values.map(client => ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
+    val names = clients.values.filter(_.client.name.isDefined).map(client => ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
     ).toSeq
     clients.values foreach (_.actor ! NotifyClientsChanged(names))
   }

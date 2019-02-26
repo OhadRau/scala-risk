@@ -18,14 +18,14 @@ class Room(roomName: String, var host: ClientWithActor) {
 
   def getStatus: RoomStatus = {
     RoomStatus(roomName, host.client.name getOrElse "", roomId, clients.values map (client =>
-      ClientStatus(client.client.name getOrElse "", statuses(client.client.token))) toSeq)
+      ClientStatus(client.client.name getOrElse "", statuses(client.client.token), client.client.publicToken)) toSeq)
   }
 
   def setReady(token: String): Unit = {
     statuses(token) = Ready()
   }
 
-  def getBrief: RoomBrief = RoomBrief(roomName, host.client.name getOrElse "", roomId, clients.size)
+  def getBrief: RoomBrief = RoomBrief(roomName, host.client.publicToken, roomId, clients.size)
 
   def addClient(client: ClientWithActor): Unit = {
     clients += client.client.token -> client
@@ -37,9 +37,9 @@ class Room(roomName: String, var host: ClientWithActor) {
 
 case class RoomStatus(name: String, hostName: String, roomId: String, clientStatus: Seq[ClientStatus])
 
-case class RoomBrief(name: String, hostName: String, roomId: String, numClients: Int)
+case class RoomBrief(name: String, hostToken: String, roomId: String, numClients: Int)
 
-case class ClientStatus(name: String, status: Status = Waiting())
+case class ClientStatus(name: String, status: Status = Waiting(), publicToken: String)
 
 object Status {
   implicit val waitingWrite = Json.writes[Waiting]
