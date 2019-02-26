@@ -3,6 +3,7 @@ import {types} from '@/vuex/modules'
 export class Token {
   constructor (other) {
     this.token = other.token
+    this.publicToken = other.publicToken
   }
 }
 
@@ -56,6 +57,13 @@ export class RoomCreationResult {
 export class CreatedRoom {
   constructor (other) {
     this.token = other.token
+  }
+}
+
+export class JoinedRoom {
+  constructor (other) {
+    this.roomId = other.token
+    this.playerId = other.playerId
   }
 }
 

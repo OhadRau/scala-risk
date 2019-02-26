@@ -14,6 +14,7 @@
           :key="room.id"
           @click=""
         >
+          <!--TODO: Click Handler-->
           <v-list-tile-content>
             <v-list-tile-title v-text="room.name"></v-list-tile-title>
           </v-list-tile-content>
