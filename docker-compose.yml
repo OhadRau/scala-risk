@@ -2,5 +2,12 @@ version: '3'
 services:
     backend:
         build: ./backend
+        command: ['sbt', 'playUpdateSecret', 'runProd']
         ports:
             - "9000:9000"
+        stdin_open: true
+        tty: true
+    frontend:
+        build: ./frontend
+        ports:
+            - "8080:80"
