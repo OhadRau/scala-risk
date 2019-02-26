@@ -4,18 +4,28 @@ import play.api.libs.json._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
+import scala.runtime.ScalaRunTime.stringOf
 import scala.util.Random
 
 
 class Game(val state: GameState) {
   val N_PLAYERS_ARMY: Map[Int, Int] = Map(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
   val logger = play.api.Logger(getClass)
+  var turnOrder: Seq[Player] = players;
 
-  def initGame: Unit = {
+  def initGame(): Unit = {
+    turnOrder = assignTurnOrder(state.players)
+
     for (player <- state.players) {
       player.unitCount = N_PLAYERS_ARMY(state.players.length)
       logger.debug(s"${player.name} got assigned ${player.unitCount} armies")
     }
+  }
+
+  def assignTurnOrder(array: Seq[Player]): Seq[Player] = {
+    val turnOrder = Random.shuffle(array)
+    logger.debug(stringOf(turnOrder))
+    turnOrder
   }
 
   def players: Seq[Player] = state.players

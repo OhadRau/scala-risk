@@ -21,7 +21,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   var roomId = ""
   it should "accept RegisterClient and reply with a Token" in {
     for (i <- 0 until numClients) {
-      clients(i) = TestProbe(s"client${i}")
+      clients(i) = TestProbe(s"client$i")
     }
 
     When("the clients are added")
@@ -33,7 +33,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     Then("each client should receive a token")
     tokens = clients.map(client => {
       client.expectMsgPF() {
-        case Token(token) => token
+        case Token(token, publicToken) => token
       }
     })
 
@@ -41,7 +41,12 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     tokens.toSet should have size tokens.length
   }
 
-  it should "be able to assign names to a client broadcast change to all clients" in {
+  it should "reject invalid names such as empty string" in {
+    rootActor ! AssignName("", tokens(0))
+    clients(0).expectMsg(Err("Name is not unique!"))
+  }
+
+  it should "be able to assign names to a client and broadcast change to all clients" in {
     for (i <- 0 until numClients) {
       val name: String = ('A' + i).asInstanceOf[Char].toString
       names += name
@@ -53,6 +58,11 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
         }
       })
     }
+  }
+
+  it should "reject multiple attempts to assign the same name to a client" in {
+    rootActor ! AssignName("A", tokens(0))
+    clients(0).expectMsg(Err("Name already assigned!"))
   }
 
   it should "be able to create a room" in {
@@ -68,7 +78,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
           rooms.head.numClients should be (1)
       }
     })
-    println(s"roomId: $roomId")
+    logger.debug(s"roomId: $roomId")
   }
 
   it should "be able to allow players to join the room" in {
@@ -158,7 +168,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     val sacrifice = TestProbe("sacrifice")
     rootActor ! RegisterClient(Client(), sacrifice.ref)
     val sacrificeToken = sacrifice.expectMsgPF() {
-      case Token(token) => token
+      case Token(token, publicToken) => token
     }
     rootActor ! AssignName("Sacrifice", sacrificeToken)
     sacrifice.expectMsgPF() {
