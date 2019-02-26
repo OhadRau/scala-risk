@@ -16,6 +16,7 @@ const state = {
     valid: null,
     committed: false
   },
+  joinedRoom: null,
   rooms: [],
   players: []
 }
