@@ -17,6 +17,9 @@ libraryDependencies += "org.awaitility" % "awaitility" % "3.1.3" % Test
 libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % "2.5.21"
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.21" % Test
 
+javaOptions in Universal ++= Seq(
+  "-Dpidfile.path=/dev/null"
+)
 
 scalacOptions ++= Seq(
   "-feature",
