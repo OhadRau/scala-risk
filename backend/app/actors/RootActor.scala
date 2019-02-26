@@ -133,9 +133,9 @@ class RootActor() extends Actor {
           val room = new Room(roomName, clientActor)
           rooms += (room.roomId -> room)
           logger.debug(s"Created room with roomId ${room.roomId}")
-          room.addClient(clientActor)
           clientActor.actor ! CreatedRoom(room.roomId)
           notifyRoomsChanged()
+          room.addClient(clientActor)
       }
       case None =>
         logger.error(s"Client with token $token tried to create a room, but had no name")
@@ -147,7 +147,6 @@ class RootActor() extends Actor {
     if (room.clients.size < 6) {
       room.addClient(clientActor)
       logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
-      clientActor.actor ! JoinedRoom(roomId)
       notifyRoomStatus(room)
       notifyRoomsChanged()
     } else {
@@ -198,9 +197,14 @@ class RootActor() extends Actor {
     }
   }
 
-  def notifyRoomStatus(room: Room): Unit = {
+  def notifyRoomStatus(room: Room, actor: Option[ClientWithActor] = Option.empty): Unit = {
     val status = room.getStatus
-    room.clients.values foreach (_.actor ! NotifyRoomStatus(status))
+    actor match {
+      case Some(value) =>
+        value.actor ! NotifyRoomStatus(status)
+      case None =>
+        room.clients.values foreach (_.actor ! NotifyRoomStatus(status))
+    }
   }
 
   def checkAlive(): Unit = {
