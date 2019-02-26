@@ -28,7 +28,7 @@ export class NotifyRoomsChanged {
 
 export class NotifyClientsChanged {
   constructor (other) {
-    this.clients = other.strings
+    this.players = other.strings
   }
 }
 
@@ -124,9 +124,9 @@ export function processMessage (store, socket, toastr, message) {
     case 'actors.RoomCreationResult':
       store.commit(types.GAME_ROOM_CREATION_RESULT_OCCURRED, new RoomCreationResult(message))
       break
-    // case 'actors.NotifyClientsChanged':
-    //   const clientsChanged = new NotifyClientsChanged(message)
-    //   break
+    case 'actors.NotifyClientsChanged':
+      store.commit(types.GAME_PLAYER_LIST_CHANGED, new NotifyClientsChanged(message))
+      break
     case 'actors.NameAssignResult':
       const nameAssignmentResult = new NameAssignResult(message)
       if (store.state.game.displayName.name === nameAssignmentResult.name) {

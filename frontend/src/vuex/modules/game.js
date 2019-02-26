@@ -8,10 +8,12 @@ export const types = {
   COMMIT_GAME_NAME: 'COMMIT_GAME_NAME',
   GAME_ROOM_CREATION_RESULT_OCCURRED: 'GAME_ROOM_CREATION_RESULT_OCCURRED',
   GAME_ROOM_CREATED: 'GAME_ROOM_CREATED',
-  GAME_ROOM_JOIN: 'GAME_ROOM_JOIN'
+  GAME_ROOM_JOIN: 'GAME_ROOM_JOIN',
+  GAME_PLAYER_LIST_CHANGED: 'GAME_PLAYER_LIST_CHANGED'
 }
 const state = {
   token: null,
+  publicToken: null,
   displayName: {
     name: '',
     valid: null,
@@ -24,6 +26,7 @@ const state = {
 const mutations = {
   [types.SET_TOKEN] (state, token) {
     state.token = token.token
+    state.publicToken = token.publicToken
   },
   [types.GAME_ROOMS_CHANGED] (state, roomChangePacket) {
     state.rooms = roomChangePacket.rooms
@@ -52,11 +55,17 @@ const mutations = {
   },
   [types.GAME_ROOM_JOIN] (state, roomJoin) {
     state.joinedRoom = roomJoin.roomId
+  },
+  [types.GAME_PLAYER_LIST_CHANGED] (state, change) {
+    state.players = change.players
   }
 }
 const getters = {
   gameToken (state) {
     return state.token
+  },
+  gamePublicToken (state) {
+    return state.publicToken
   },
   gameNameValid (state) {
     return state.displayName.valid
