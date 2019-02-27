@@ -85,7 +85,7 @@ export class ClientReady {
   constructor (token, roomId) {
     this.token = token
     this.roomId = roomId
-    this._type = 'actions.ClientReady'
+    this._type = 'actors.ClientReady'
   }
 }
 
@@ -93,7 +93,7 @@ export class StartGame {
   constructor (token, roomId) {
     this.token = token
     this.roomId = roomId
-    this._type = 'actions.StartGame'
+    this._type = 'actors.StartGame'
   }
 }
 

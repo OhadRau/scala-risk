@@ -12,7 +12,7 @@
         <PlayerList :players="currentRoomPlayerList" :key-token="hostPublicToken" key-value="👑Host"/>
         <v-card-actions>
           <v-spacer/>
-          <v-btn color="primary" v-if="showStartGame" :disabled="roomReady" @click="startGame">Start Game</v-btn>
+          <v-btn color="primary" v-if="showStartGame" :disabled="!roomReady" @click="startGame">Start Game</v-btn>
           <v-btn color="primary" v-if="!showStartGame" @click="sendReady">Ready</v-btn>
         </v-card-actions>
       </v-card>
@@ -45,10 +45,10 @@ export default {
   },
   methods: {
     sendReady () {
-      this.$socket.sendObj(new ClientReady(this.$store.state.game.token, this.$store.state.joinedRoom.roomId))
+      this.$socket.sendObj(new ClientReady(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId))
     },
     startGame () {
-      this.$socket.sendObj(new StartGame(this.$store.state.game.token, this.$store.state.joinedRoom.roomId))
+      this.$socket.sendObj(new StartGame(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId))
     }
   },
   computed: {
@@ -66,7 +66,7 @@ export default {
       const currentRoom = this.$store.state.game.rooms.find((item) => {
         return this.joinedRoom.roomId === item.roomId
       })
-      return currentRoom.hostToken
+      return currentRoom ? currentRoom.hostToken : ''
     },
     roomReady () {
       return this.currentRoomPlayerList.length >= 3
