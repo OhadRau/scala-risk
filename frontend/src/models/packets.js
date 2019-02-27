@@ -75,11 +75,35 @@ export class JoinedRoom {
   }
 }
 
+export class ClientReady {
+  constructor (token, roomId) {
+    this.token = token
+    this.roomId = roomId
+    this._type = 'actions.ClientReady'
+  }
+}
+
+export class StartGame {
+  constructor (token, roomId) {
+    this.token = token
+    this.roomId = roomId
+    this._type = 'actions.StartGame'
+  }
+}
+
 export class CreateRoom {
   constructor (token, roomName) {
     this.token = token
     this.roomName = roomName
     this._type = 'actors.CreateRoom'
+  }
+}
+
+export class JoinRoom {
+  constructor (token, roomId) {
+    this.token = token
+    this.roomId = roomId
+    this._type = 'actors.JoinRoom'
   }
 }
 

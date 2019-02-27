@@ -12,7 +12,7 @@
         <v-list-tile
           v-for="room in rooms"
           :key="room.id"
-          @click=""
+          @click="joinRoom(room)"
         >
           <!--TODO: Click Handler-->
           <v-list-tile-content>
@@ -65,6 +65,7 @@
 
 <script>
 import {types} from '@/vuex/modules'
+import {JoinRoom} from '@/models/packets'
 
 export default {
   computed: {
@@ -93,6 +94,9 @@ export default {
     })
   },
   methods: {
+    joinRoom (room) {
+      this.$socket.sendObj(new JoinRoom(this.$store.state.game.token, room.roomId))
+    },
     createRoom () {
       if (this.roomCreationProgress === null && this.roomCreationName.length) {
         this.roomCreationProgress = 'waiting'

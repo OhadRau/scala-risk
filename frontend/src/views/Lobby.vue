@@ -6,10 +6,15 @@
     <v-flex  xs12 sm6 md4 lg4 xl2 pa-1 v-if="joinedRoom.roomId !== null">
       <v-card>
         <v-toolbar>
-          <v-toolbar-title>Players in Room {{joinedRoom.name}}</v-toolbar-title>
+          <v-toolbar-title>Players in Room: {{joinedRoom.name}}</v-toolbar-title>
           <v-spacer/>
         </v-toolbar>
         <PlayerList :players="currentRoomPlayerList" :key-token="gamePublicToken"/>
+        <v-card-actions>
+          <v-spacer/>
+          <v-btn color="primary" v-if="showStartGame" :disabled="roomReady">Start Game</v-btn>
+          <v-btn color="primary" v-if="!showStartGame">Ready</v-btn>
+        </v-card-actions>
       </v-card>
     </v-flex>
     <v-flex xs12 sm6 md4 lg4 xl2 pa-1>
@@ -38,11 +43,17 @@ export default {
     }
   },
   methods: {
-    findRoomNameById (roomId) {
-    }
   },
   computed: {
     ...mapGetters([ 'gamePublicToken' ]),
+    showStartGame () {
+      // TODO: Optimization with object
+      const currentRoom = this.$store.state.game.rooms.find((item) => { return this.joinedRoom.roomId === item.roomId })
+      return currentRoom !== undefined && currentRoom.hostToken === this.$store.state.game.publicToken
+    },
+    roomReady () {
+      return this.currentRoomPlayerList.length >= 3
+    },
     joinedRoom () {
       return this.$store.state.game.joinedRoom
     },
