@@ -9,7 +9,7 @@
         <!--TODO: Click Handler-->
         <v-list-tile-content>
           <v-list-tile-title v-text="player.name"></v-list-tile-title>
-          <v-list-tile-sub-title v-if="player.publicToken === keyToken">(Me)</v-list-tile-sub-title>
+          <v-list-tile-sub-title v-if="player.publicToken === keyToken">{{keyValue}}</v-list-tile-sub-title>
         </v-list-tile-content>
       </v-list-tile>
       <v-divider></v-divider>
@@ -36,6 +36,10 @@ export default {
     onClickPlayer: {
       type: Function,
       default () { return () => {} }
+    },
+    keyValue: {
+      type: String,
+      default () { return '(Me)' }
     }
   }
 }

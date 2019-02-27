@@ -75,6 +75,12 @@ export class JoinedRoom {
   }
 }
 
+export class Err {
+  constructor (other) {
+    this.message = other.msg
+  }
+}
+
 export class ClientReady {
   constructor (token, roomId) {
     this.token = token
@@ -170,6 +176,9 @@ export function processMessage (store, socket, toastr, message) {
       if (store.state.game.displayName.name === nameAssignmentResult.name) {
         store.commit(types.COMMIT_GAME_NAME, nameAssignmentResult)
       }
+      break
+    case 'actors.Err':
+      toastr('error', new Err(message).message, 'Error from Server')
       break
     default:
       toastr('info', JSON.stringify(message), 'Un-parsed Socket Message:')
