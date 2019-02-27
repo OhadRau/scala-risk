@@ -164,7 +164,7 @@ class RootActor() extends Actor {
 
   def startGame(roomId: String, token: String)(implicit clientWithActor: ClientWithActor, room: Room): Unit = {
     if (room.host.client.token == token) {
-      if (room.statuses.values.count(status => status == Waiting()) == 0) {
+      if (room.statuses.filter(_._1 != token).values.count(status => status == Waiting()) == 0) {
         logger.debug("Starting Game!")
         // Create new game
         val playerSeq = rooms(roomId).clients.values.map(client => new Player(
