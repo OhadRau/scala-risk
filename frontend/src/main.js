@@ -11,7 +11,9 @@ import 'material-design-icons-iconfont/dist/material-design-icons.css'
 // Include mini-toaster (or any other UI-notification library)
 import VueToastr from '@deveodk/vue-toastr'
 import '@deveodk/vue-toastr/dist/@deveodk/vue-toastr.css'
+import vueDebounce from 'vue-debounce'
 
+Vue.use(vueDebounce)
 Vue.use(VueToastr, {
   defaultPosition: 'toast-top-right',
   defaultType: 'info',

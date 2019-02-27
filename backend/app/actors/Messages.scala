@@ -34,9 +34,13 @@ case class Token(token: String, publicToken: String) extends OutEvent
 
 case class CreatedRoom(token: String) extends OutEvent
 
-case class JoinedRoom(token: String) extends OutEvent
+case class JoinedRoom(token: String, playerToken: String) extends OutEvent
 
 case class NameCheckResult(available: Boolean, name: String) extends OutEvent
+
+case class NameAssignResult(success: Boolean, name: String, message: String = "") extends OutEvent
+
+case class RoomCreationResult(success: Boolean, message: String = "") extends OutEvent
 
 case class Ok(msg: String) extends OutEvent
 
@@ -119,6 +123,8 @@ object OutEvent {
   implicit val userMessageWrite = Json.writes[UserMessage]
   implicit val roomMessageWrite = Json.writes[RoomMessage]
   implicit val nameCheckResultWrite = Json.writes[NameCheckResult]
+  implicit val nameAssignResultWrite = Json.writes[NameAssignResult]
+  implicit val roomCreationResult = Json.writes[RoomCreationResult]
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]

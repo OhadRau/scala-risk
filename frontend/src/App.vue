@@ -47,10 +47,9 @@ export default {
   created () {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === 'SOCKET_ONOPEN') {
-        this.$toastr('success', 'Socket Open!')
+        this.$toastr('success', 'Connected to Server!')
       } else if (mutation.type === 'SOCKET_ONMESSAGE') {
-        processMessage(this.$store, this.$socket, mutation.payload)
-        this.$toastr('info', JSON.stringify(mutation.payload), 'Socket Message:')
+        processMessage(this.$store, this.$socket, this.$toastr, mutation.payload)
       }
     })
   }

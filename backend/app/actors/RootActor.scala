@@ -102,11 +102,12 @@ class RootActor() extends Actor {
 
   def assignName(token: String, name: String)(implicit client: ClientWithActor): Unit = {
     if (client.client.name.isDefined && client.client.name.getOrElse("") == name) {
-      client.actor ! Err("Name already assigned!")
+      client.actor ! NameAssignResult(success = false, name, "Name already assigned!")
     } else if (clients.values.exists(_.client.name.getOrElse("") == name)) {
-      client.actor ! Err("Name is not unique!")
+      client.actor ! NameAssignResult(success = false, name, "Name is not unique!")
     } else {
       client.client.name = Some(name)
+      client.actor ! NameAssignResult(success = true, name)
       logger.debug(s"$name assigned to client")
       notifyClientsChanged()
     }
@@ -127,16 +128,19 @@ class RootActor() extends Actor {
       case Some(_) => rooms.get(roomName) match {
         case Some(_) =>
           logger.error(s"Client with token $token tried to create room with duplicate name $roomName")
-          clientActor.actor ! Err("A room with that name already exists")
+          clientActor.actor ! RoomCreationResult(success = false, "A room with that name already exists")
         case None =>
           val room = new Room(roomName, clientActor)
           rooms += (room.roomId -> room)
           logger.debug(s"Created room with roomId ${room.roomId}")
-          room.addClient(clientActor)
           clientActor.actor ! CreatedRoom(room.roomId)
+          room.addClient(clientActor)
           notifyRoomsChanged()
+          notifyRoomStatus(room, Some(clientActor))
       }
-      case None => logger.error(s"Client with token $token tried to create a room, but had no name")
+      case None =>
+        logger.error(s"Client with token $token tried to create a room, but had no name")
+        clientActor.actor ! RoomCreationResult(success = false, s"Client with token $token tried to create a room, but had no name")
     }
   }
 
@@ -144,7 +148,6 @@ class RootActor() extends Actor {
     if (room.clients.size < 6) {
       room.addClient(clientActor)
       logger.debug(s"Client ${clientActor.client.name} joined room $roomId")
-      clientActor.actor ! JoinedRoom(roomId)
       notifyRoomStatus(room)
       notifyRoomsChanged()
     } else {
@@ -182,7 +185,7 @@ class RootActor() extends Actor {
   }
 
   def notifyClientsChanged(): Unit = {
-    val names = clients.values.map(client => ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
+    val names = clients.values.filter(_.client.name.isDefined).map(client => ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
     ).toSeq
     clients.values foreach (_.actor ! NotifyClientsChanged(names))
   }
@@ -195,9 +198,14 @@ class RootActor() extends Actor {
     }
   }
 
-  def notifyRoomStatus(room: Room): Unit = {
+  def notifyRoomStatus(room: Room, actor: Option[ClientWithActor] = Option.empty): Unit = {
     val status = room.getStatus
-    room.clients.values foreach (_.actor ! NotifyRoomStatus(status))
+    actor match {
+      case Some(value) =>
+        value.actor ! NotifyRoomStatus(status)
+      case None =>
+        room.clients.values foreach (_.actor ! NotifyRoomStatus(status))
+    }
   }
 
   def checkAlive(): Unit = {

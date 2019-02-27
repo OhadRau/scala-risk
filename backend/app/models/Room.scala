@@ -1,10 +1,9 @@
 package models
 
-import actors.ClientWithActor
-import play.api.libs.json.{Json, OFormat, Writes}
+import actors.{ClientWithActor, JoinedRoom}
+import play.api.libs.json.Json
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 import scala.util.Random
 
@@ -19,26 +18,28 @@ class Room(roomName: String, var host: ClientWithActor) {
 
   def getStatus: RoomStatus = {
     RoomStatus(roomName, host.client.name getOrElse "", roomId, clients.values map (client =>
-      ClientStatus(client.client.name getOrElse "", statuses(client.client.token))) toSeq)
+      ClientStatus(client.client.name getOrElse "", statuses(client.client.token), client.client.publicToken)) toSeq)
   }
 
   def setReady(token: String): Unit = {
     statuses(token) = Ready()
   }
 
-  def getBrief: RoomBrief = RoomBrief(roomName, host.client.name getOrElse "", roomId, clients.size)
+  def getBrief: RoomBrief = RoomBrief(roomName, host.client.publicToken, roomId, clients.size)
 
   def addClient(client: ClientWithActor): Unit = {
     clients += client.client.token -> client
     statuses += client.client.token -> Waiting()
+    val joinedMessage= JoinedRoom(roomId, client.client.publicToken)
+    clients.values.foreach(_.actor ! joinedMessage)
   }
 }
 
 case class RoomStatus(name: String, hostName: String, roomId: String, clientStatus: Seq[ClientStatus])
 
-case class RoomBrief(name: String, hostName: String, roomId: String, numClients: Int)
+case class RoomBrief(name: String, hostToken: String, roomId: String, numClients: Int)
 
-case class ClientStatus(name: String, status: Status = Waiting())
+case class ClientStatus(name: String, status: Status = Waiting(), publicToken: String)
 
 object Status {
   implicit val waitingWrite = Json.writes[Waiting]
