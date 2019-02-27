@@ -23,6 +23,7 @@ const state = {
   joinedRoom: {
     name: '',
     roomId: null,
+    hostToken: '',
     clientStatus: []
   },
   rooms: [],
