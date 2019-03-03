@@ -12,14 +12,22 @@ sealed trait RootMsg
 sealed trait AuthenticatedRootMsg extends RootMsg with AuthenticatedMsg
 
 sealed trait RoomMsg extends AuthenticatedMsg { val roomId: String }
+// Client tries to join room
+case class JoinRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
+// Client marks himself ready
+case class ClientReady(roomId: String, token: String) extends RoomMsg with SerializableInEvent
+case class StartGame(roomId: String, token: String) extends RoomMsg with SerializableInEvent
+case class LeaveRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 
 sealed trait ChatMsg extends AuthenticatedMsg
-case class MessageToUser(token: String, recipientPublic: String, message: String) extends SerializableInEvent with ChatMsg
-case class MessageToRoom(token: String, roomId: String, message: String) extends SerializableInEvent with ChatMsg
+case class MessageToUser(token: String, recipientPublic: String, message: String) extends ChatMsg with SerializableInEvent
+case class MessageToRoom(token: String, roomId: String, message: String) extends ChatMsg with SerializableInEvent
 case class UserMessage(senderName: String, publicToken: String, message: String, timestamp: String) extends OutEvent
 case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent
 
 sealed trait GameMsg extends AuthenticatedMsg { val gameId: String }
+case class PlaceArmy(gameId: String, token: String) extends GameMsg with SerializableInEvent
+case class MoveArmy(gameId: String, token: String, armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg with SerializableInEvent
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -69,29 +77,21 @@ case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with 
 case class KeepAliveTick() extends InEvent with RootMsg
 
 // Client request to list rooms
-case class ListRoom(token: String) extends SerializableInEvent with AuthenticatedRootMsg
+case class ListRoom(token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
 // Client request to validate a name's availability
-case class CheckName(token: String, name: String) extends SerializableInEvent with AuthenticatedRootMsg
+case class CheckName(token: String, name: String) extends AuthenticatedRootMsg with SerializableInEvent
 
 // Client response to our ping
-case class Pong(token: String) extends SerializableInEvent with AuthenticatedRootMsg
+case class Pong(token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
 // Client tries to assign name
-case class AssignName(name: String, token: String) extends SerializableInEvent with AuthenticatedRootMsg
+case class AssignName(name: String, token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
 // Client tries to create room
-case class CreateRoom(roomName: String, token: String) extends SerializableInEvent with AuthenticatedRootMsg
+case class CreateRoom(roomName: String, token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
-// Client tries to join room
-case class JoinRoom(roomId: String, token: String) extends SerializableInEvent with RoomMsg
 
-// Client marks himself ready
-case class ClientReady(roomId: String, token: String) extends SerializableInEvent with RoomMsg
-
-case class StartGame(roomId: String, token: String) extends SerializableInEvent with RoomMsg
-
-case class TestGameMsg(gameId: String, token: String) extends SerializableInEvent with GameMsg
 
 object SerializableInEvent {
   implicit val assignNameRead = Json.reads[AssignName]
@@ -104,8 +104,10 @@ object SerializableInEvent {
   implicit val msgToUserRead = Json.reads[MessageToUser]
   implicit val checkNameRead = Json.reads[CheckName]
   implicit val msgToRoomRead = Json.reads[MessageToRoom]
+  implicit val leaveRoomRead = Json.reads[LeaveRoom]
 
-  implicit val testGameMsgRead = Json.reads[TestGameMsg]
+  implicit val placeArmyRead = Json.reads[PlaceArmy]
+  implicit val moveArmyRead = Json.reads[MoveArmy]
   implicit val serializableInEventRead = Json.reads[SerializableInEvent]
 }
 

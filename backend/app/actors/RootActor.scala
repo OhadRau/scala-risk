@@ -46,13 +46,16 @@ class RootActor() extends Actor {
             case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
             case a: RoomMsg => handleRoomMsg(a)
           }
-        case None =>
-          sender() ! Err("Invalid Token")
-          logger.debug("Client with invalid Token")
+        case None => handleInvalidToken(sender())
       }
     case RegisterClient(client, actor) => handleRegisterClient(client, actor)
     case _: KeepAliveTick => checkAlive()
     case other => logger.debug(other.toString)
+  }
+
+  def handleInvalidToken(sender: ActorRef): Unit = {
+    sender ! Err("Invalid Token")
+    logger.debug("Client with invalid Token")
   }
 
   def handleRegisterClient(client: Client, actor: ActorRef): Unit = {
@@ -93,6 +96,7 @@ class RootActor() extends Actor {
           case JoinRoom(roomId, token) => joinRoom(roomId, token)
           case StartGame(roomId, token) => startGame(roomId, token)
           case ClientReady(roomId, token) => ready(roomId, token)
+          case LeaveRoom(roomId, token) => leaveRoom(roomId, token)
         }
       case _ =>
         logger.error(s"PLayer with token ${msg.token} tried to join invalid room ${msg.roomId}")
@@ -152,6 +156,13 @@ class RootActor() extends Actor {
       notifyRoomsChanged()
     } else {
       clientActor.actor ! Err(s"Room $roomId is full!")
+    }
+  }
+
+  def leaveRoom(roomId: String, token: String)(implicit clientActor: ClientWithActor, room: Room): Unit = {
+    room.removeClient(token)
+    if (room.clients.isEmpty) {
+      rooms -= room.roomId
     }
   }
 
