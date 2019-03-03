@@ -17,6 +17,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   val rootActor = system.actorOf(Props(new RootActor()))
   var clients = new Array[TestProbe](numClients)
   var tokens = new Array[String](numClients)
+  var publicTokens = new Array[String](numClients)
   val names = new ArrayBuffer[String](numClients)
   var roomId = ""
   it should "accept RegisterClient and reply with a Token" in {
@@ -30,20 +31,23 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       rootActor ! registerClient
     })
 
-    Then("each client should receive a token")
-    tokens = clients.map(client => {
+    Then("each client should receive a token and a publicToken")
+    val tup = clients.map(client => {
       client.expectMsgPF() {
-        case Token(token, publicToken) => token
+        case Token(token, publicToken) => (token, publicToken)
       }
     })
+    tokens = tup.unzip._1
+    publicTokens = tup.unzip._2
 
-    And("each token is unique")
+    And("each token and publicToken is unique")
     tokens.toSet should have size tokens.length
+    publicTokens.toSet should have size publicTokens.length
   }
 
   it should "reject invalid names such as empty string" in {
     rootActor ! AssignName("", tokens(0))
-    clients(0).expectMsg(Err("Name is not unique!"))
+    clients(0).expectMsg(NameAssignResult(success = false,"","Name is not unique!"))
   }
 
   it should "be able to assign names to a client and broadcast change to all clients" in {
@@ -51,18 +55,21 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       val name: String = ('A' + i).asInstanceOf[Char].toString
       names += name
       rootActor ! AssignName(name, tokens(i))
-      clients foreach (client => {
-        client.expectMsgPF() {
+      for (j <- 0 until numClients) {
+        if(i == j) {
+          clients(j).expectMsg(NameAssignResult(success = true, name))
+        }
+        clients(j).expectMsgPF() {
           case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
             names foreach (nameInArray => clientsSeq.exists(clientBrief => clientBrief.name == nameInArray))
         }
-      })
+      }
     }
   }
 
   it should "reject multiple attempts to assign the same name to a client" in {
     rootActor ! AssignName("A", tokens(0))
-    clients(0).expectMsg(Err("Name already assigned!"))
+    clients(0).expectMsg(NameAssignResult(success = false, "A", "Name already assigned!"))
   }
 
   it should "be able to create a room" in {
@@ -70,14 +77,25 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     roomId = clients(0).expectMsgPF() {
       case CreatedRoom(id) => id
     }
+    clients(0).expectMsg(JoinedRoom(roomId, publicTokens(0)))
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
           rooms.head.name should be("testRoom")
-          rooms.head.hostName should be(names(0))
+          rooms.head.hostToken should be(publicTokens(0))
           rooms.head.numClients should be (1)
       }
     })
+    clients(0).expectMsgPF() {
+      case NotifyRoomStatus(roomStatus: RoomStatus) =>
+        logger.debug("NotifyRoomStatus")
+        roomStatus.name should be("testRoom")
+        roomStatus.hostName should be(names(0))
+        roomStatus.clientStatus foreach (clientStatus => {
+          clientStatus.name should be(names(0))
+          clientStatus.status should be(Waiting())
+        })
+    }
     logger.debug(s"roomId: $roomId")
   }
 
@@ -90,24 +108,26 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       joinedPlayers += names(i)
       numJoined += 1
       for (j <- 0 until numClients) {
-        if (i == j) {
-          clients(j).expectMsg(JoinedRoom(roomId))
-        }
         if (j <= i) {
-          clients(j).expectMsgPF() {
-            case NotifyRoomStatus(roomStatus: RoomStatus) =>
-              roomStatus.name should be("testRoom")
-              roomStatus.hostName should be(names(0))
-              roomStatus.clientStatus foreach (clientStatus => {
-                joinedPlayers should contain(clientStatus.name)
-                clientStatus.status should be(Waiting())
-              })
+          for(_ <- 0 until 2) {
+            clients(j).expectMsgPF() {
+              case NotifyRoomStatus(roomStatus: RoomStatus) =>
+                roomStatus.name should be("testRoom")
+                roomStatus.hostName should be(names(0))
+                roomStatus.clientStatus foreach (clientStatus => {
+                  joinedPlayers should contain(clientStatus.name)
+                  clientStatus.status should be(Waiting())
+                })
+              case JoinedRoom(id, public) =>
+                id should be (roomId)
+                public should be (publicTokens(i))
+            }
           }
         }
         clients(j).expectMsgPF() {
           case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
             rooms.head.name should be("testRoom")
-            rooms.head.hostName should be(names(0))
+            rooms.head.hostToken should be(publicTokens(0))
             rooms.head.numClients should equal (numJoined)
         }
       }
@@ -127,9 +147,9 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
           case NotifyRoomStatus(roomStatus: RoomStatus) =>
             for (j <- 0 until numClients) {
               if (j <= i) {
-                roomStatus.clientStatus contains ClientStatus(names(j), Ready())
+                roomStatus.clientStatus contains ClientStatus(names(j), Ready(), publicTokens(j))
               } else {
-                roomStatus.clientStatus contains ClientStatus(names(j), Waiting())
+                roomStatus.clientStatus contains ClientStatus(names(j), Waiting(), publicTokens(j))
               }
             }
         }
@@ -171,6 +191,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       case Token(token, publicToken) => token
     }
     rootActor ! AssignName("Sacrifice", sacrificeToken)
+    sacrifice.expectMsg(NameAssignResult(success = true, "Sacrifice"))
     sacrifice.expectMsgPF() {
       case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
         clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (true)
