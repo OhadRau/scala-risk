@@ -75,6 +75,13 @@ export class JoinedRoom {
   }
 }
 
+export class GameState {
+  constructor (other) {
+    this.players = other.state.players
+    this.map = other.state.map
+  }
+}
+
 export class Err {
   constructor (other) {
     this.message = other.msg
@@ -176,6 +183,9 @@ export function processMessage (store, socket, toastr, message) {
       if (store.state.game.displayName.name === nameAssignmentResult.name) {
         store.commit(types.COMMIT_GAME_NAME, nameAssignmentResult)
       }
+      break
+    case 'actors.NotifyGameStarted':
+      store.commit(types.GAME_STARTED, new GameState(message))
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')

@@ -10,7 +10,8 @@ export const types = {
   GAME_ROOM_CREATED: 'GAME_ROOM_CREATED',
   GAME_ROOM_JOIN: 'GAME_ROOM_JOIN',
   GAME_ROOM_STATUS_CHANGED: 'GAME_ROOM_STATUS_CHANGED',
-  GAME_PLAYER_LIST_CHANGED: 'GAME_PLAYER_LIST_CHANGED'
+  GAME_PLAYER_LIST_CHANGED: 'GAME_PLAYER_LIST_CHANGED',
+  GAME_STARTED: 'GAME_STARTED'
 }
 const state = {
   token: null,
@@ -27,7 +28,11 @@ const state = {
     clientStatus: []
   },
   rooms: [],
-  players: []
+  players: [],
+  game: {
+    players: [],
+    territories: []
+  }
 }
 const mutations = {
   [ types.SET_TOKEN ] (state, token) {
@@ -73,6 +78,12 @@ const mutations = {
   },
   [ types.GAME_PLAYER_LIST_CHANGED ] (state, change) {
     state.players = change.players
+  },
+  [ types.GAME_STARTED ] (state, change) {
+    state.game = {
+      players: change.players,
+      territories: change.map.territories
+    }
   }
 }
 const getters = {
