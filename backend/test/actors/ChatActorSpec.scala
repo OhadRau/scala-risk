@@ -42,6 +42,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     And("have names")
     rootActor ! AssignName("A", tokens(0))
     names append "A"
+    clients(0).expectMsg(NameAssignResult(success = true, "A"))
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
@@ -50,6 +51,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     })
     rootActor ! AssignName("B", tokens(1))
     names append "B"
+    clients(1).expectMsg(NameAssignResult(success = true, "B"))
     publicToken append ""
     publicToken append ""
     clients foreach (client => {
@@ -114,6 +116,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     }
 
     rootActor ! AssignName("C", tokens(2))
+    clients(2).expectMsg(NameAssignResult(success = true, "C"))
     names append "C"
     publicToken append ""
     clients foreach (client => {
@@ -130,11 +133,12 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     roomId = clients(0).expectMsgPF() {
       case CreatedRoom(id) => id
     }
+    clients(0).expectMsg(JoinedRoom(roomId, publicToken(0)))
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
           rooms.head.name should be("testRoom")
-          rooms.head.hostName should be(names(0))
+          rooms.head.hostToken should be(publicToken(0))
           rooms.head.numClients should be(1)
       }
     })
