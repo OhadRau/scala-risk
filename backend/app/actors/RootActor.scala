@@ -5,10 +5,12 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import models._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 case class ClientWithActor(client: Client, actor: ActorRef)
 
@@ -161,9 +163,17 @@ class RootActor() extends Actor {
 
   def leaveRoom(roomId: String, token: String)(implicit clientActor: ClientWithActor, room: Room): Unit = {
     room.removeClient(token)
+    // TODO: Send a message to the client who left?
+    // If player who left was the host, assign a random player to be the host
     if (room.clients.isEmpty) {
       rooms -= room.roomId
+    } else if (room.host.client.token == clientActor.client.token) {
+      val random = Random
+      val newHost = room.clients.keySet.iterator.drop(random.nextInt(room.clients.size)).next
+      room.host = room.clients(newHost)
     }
+    notifyRoomStatus(room)
+    notifyRoomsChanged()
   }
 
   def ready(roomId: String, token: String)(implicit room: Room): Unit = {
@@ -174,6 +184,8 @@ class RootActor() extends Actor {
   }
 
   def startGame(roomId: String, token: String)(implicit clientWithActor: ClientWithActor, room: Room): Unit = {
+    logger.debug("received startGame")
+    logger.debug(s"host: ${room.host.client.token}, token: ${token}")
     if (room.host.client.token == token) {
       if (room.statuses.filter(_._1 != token).values.count(status => status == Waiting()) == 0) {
         logger.debug("Starting Game!")
@@ -188,6 +200,7 @@ class RootActor() extends Actor {
 
         notifyRoomsChanged()
       } else {
+        logger.debug("Sending error message!")
         clientWithActor.actor ! Err("Not everyone in the room is ready.")
       }
     } else {
@@ -228,7 +241,7 @@ class RootActor() extends Actor {
       logger.debug(s"Killing ${clientWithActor.client.name} for inactivity")
       clientWithActor.actor ! Kill("Killed for inactivity")
     }
-    rooms.retain ((_, room) => {
+    rooms.retain((_, room) => {
       room.clients.retain((_, clientWithActor) => clientWithActor.client.alive)
       room.clients.nonEmpty
     })

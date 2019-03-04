@@ -19,6 +19,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   var tokens = new Array[String](numClients)
   var publicTokens = new Array[String](numClients)
   val names = new ArrayBuffer[String](numClients)
+  var hostToken = ""
   var roomId = ""
   it should "accept RegisterClient and reply with a Token" in {
     for (i <- 0 until numClients) {
@@ -47,7 +48,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
 
   it should "reject invalid names such as empty string" in {
     rootActor ! AssignName("", tokens(0))
-    clients(0).expectMsg(NameAssignResult(success = false,"","Name is not unique!"))
+    clients(0).expectMsg(NameAssignResult(success = false, "", "Name is not unique!"))
   }
 
   it should "be able to assign names to a client and broadcast change to all clients" in {
@@ -56,7 +57,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       names += name
       rootActor ! AssignName(name, tokens(i))
       for (j <- 0 until numClients) {
-        if(i == j) {
+        if (i == j) {
           clients(j).expectMsg(NameAssignResult(success = true, name))
         }
         clients(j).expectMsgPF() {
@@ -83,7 +84,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
         case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
           rooms.head.name should be("testRoom")
           rooms.head.hostToken should be(publicTokens(0))
-          rooms.head.numClients should be (1)
+          rooms.head.numClients should be(1)
       }
     })
     clients(0).expectMsgPF() {
@@ -99,7 +100,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     logger.debug(s"roomId: $roomId")
   }
 
-  it should "be able to allow players to join the room" in {
+  it should "allow players to join the room" in {
     var numJoined = 1
     val joinedPlayers = new ArrayBuffer[String](numClients)
     joinedPlayers += "A"
@@ -109,7 +110,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
       numJoined += 1
       for (j <- 0 until numClients) {
         if (j <= i) {
-          for(_ <- 0 until 2) {
+          for (_ <- 0 until 2) {
             clients(j).expectMsgPF() {
               case NotifyRoomStatus(roomStatus: RoomStatus) =>
                 roomStatus.name should be("testRoom")
@@ -119,8 +120,8 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
                   clientStatus.status should be(Waiting())
                 })
               case JoinedRoom(id, public) =>
-                id should be (roomId)
-                public should be (publicTokens(i))
+                id should be(roomId)
+                public should be(publicTokens(i))
             }
           }
         }
@@ -128,15 +129,101 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
           case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
             rooms.head.name should be("testRoom")
             rooms.head.hostToken should be(publicTokens(0))
-            rooms.head.numClients should equal (numJoined)
+            rooms.head.numClients should equal(numJoined)
         }
       }
     }
   }
 
+  it should "allow players to leave the room" in {
+    rootActor ! LeaveRoom(roomId, tokens(1))
+    logger.info("1")
+    clients(1).expectMsgPF() {
+      case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+        rooms.head.numClients should equal (numClients - 1)
+    }
+    logger.info("2")
+    for (i <- Seq(0, 2, 3)) {
+      for (_ <- 0 until 2) {
+        clients(i).expectMsgPF() {
+          case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+            rooms.head.numClients should equal (numClients - 1)
+          case NotifyRoomStatus(status: RoomStatus) =>
+            status.clientStatus.length should equal (numClients - 1)
+        }
+      }
+    }
+  }
+
+  it should "reassign a host if the host leaves the room" in {
+    rootActor ! LeaveRoom(roomId, tokens(0))
+    clients(0).expectMsgPF() {
+      case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+        rooms.head.numClients should equal (numClients - 2)
+    }
+    clients(1).expectMsgPF() {
+      case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+        rooms.head.numClients should equal (numClients - 2)
+    }
+    for (i <- Seq(2, 3)) {
+      for (_ <- 0 until 2) {
+        clients(i).expectMsgPF() {
+          case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+            rooms.head.numClients should equal (numClients - 2)
+          case NotifyRoomStatus(status: RoomStatus) =>
+            status.hostName should not be (names(0))
+            hostToken = tokens(names.indexOf(status.hostName))
+            status.clientStatus.length should equal (numClients - 2)
+        }
+      }
+    }
+  }
+
+  it should "allow players who left to join the room again" in {
+    rootActor ! JoinRoom(roomId, tokens(1))
+    for (i <- 1 until numClients) {
+      for (_ <- 0 until 2) {
+        clients(i).expectMsgPF() {
+          case NotifyRoomStatus(roomStatus: RoomStatus) =>
+            roomStatus.name should be("testRoom")
+            roomStatus.clientStatus.size should be(clients.length - 1)
+          case JoinedRoom(id, public) =>
+            id should be(roomId)
+        }
+      }
+    }
+    clients foreach (client => {
+      client.expectMsgPF() {
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+          rooms.head.name should be("testRoom")
+          rooms.head.numClients should equal(clients.length - 1)
+      }
+    })
+    logger.info("3")
+    rootActor ! JoinRoom(roomId, tokens(0))
+    clients foreach (client => {
+      for (_ <- 0 until 2) {
+        client.expectMsgPF() {
+          case NotifyRoomStatus(roomStatus: RoomStatus) =>
+            roomStatus.name should be("testRoom")
+            roomStatus.clientStatus.size should be(clients.length)
+          case JoinedRoom(id, public) =>
+            id should be(roomId)
+        }
+      }
+    })
+    clients foreach (client => {
+      client.expectMsgPF() {
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+          rooms.head.name should be("testRoom")
+          rooms.head.numClients should equal(clients.length)
+      }
+    })
+  }
+
   it should "not allow the host to start without everyone being Ready" in {
-    rootActor ! StartGame(roomId, tokens(0))
-    clients(0).expectMsg(Err("Not everyone in the room is ready."))
+    rootActor ! StartGame(roomId, hostToken)
+    clients(tokens.indexOf(hostToken)).expectMsg(Err("Not everyone in the room is ready."))
   }
 
   it should "allow players to send Ready" in {
@@ -158,28 +245,26 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   }
 
   it should "not allow a client who is not the host to start the game" in {
-    for (i <- 1 until numClients) {
-      rootActor ! StartGame(roomId, tokens(i))
-      clients(i).expectMsg(Err("You are not the host."))
-    }
+    rootActor ! StartGame(roomId, tokens(0))
+    clients(0).expectMsg(Err("You are not the host."))
   }
 
   it should "allow the host to start the game" in {
-    rootActor ! StartGame(roomId, tokens(0))
+    rootActor ! StartGame(roomId, hostToken)
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyGameStarted(state) => state.players foreach (player => {
-          names should contain (player.name)
-          player.unitCount should be ((10 - numClients) * 5)
+          names should contain(player.name)
+          player.unitCount should be((10 - numClients) * 5)
         })
-        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be (0)
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be(0)
       }
       client.expectMsgPF() {
         case NotifyGameStarted(state) => state.players foreach (player => {
-          names should contain (player.name)
-          player.unitCount should be ((10 - numClients) * 5)
+          names should contain(player.name)
+          player.unitCount should be((10 - numClients) * 5)
         })
-        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be (0)
+        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be(0)
       }
     })
   }
@@ -194,12 +279,12 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     sacrifice.expectMsg(NameAssignResult(success = true, "Sacrifice"))
     sacrifice.expectMsgPF() {
       case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
-        clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (true)
+        clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be(true)
     }
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
-          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (true)
+          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be(true)
       }
     })
     When("a KeepAliveTick is received")
@@ -216,7 +301,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     clients foreach (client => {
       client.expectMsgPF() {
         case NotifyClientsChanged(clientsSeq: Seq[ClientBrief]) =>
-          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be (false)
+          clientsSeq exists (clientBrief => clientBrief.name == "Sacrifice") should be(false)
       }
     })
     And("the dropped client should receive a Kill message")
