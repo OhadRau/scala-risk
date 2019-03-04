@@ -307,4 +307,19 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     And("the dropped client should receive a Kill message")
     sacrifice.expectMsg(Kill("Killed for inactivity"))
   }
+
+  it should "allow sending a token to relogin" in {
+    val newClient = TestProbe("newClient")
+    rootActor ! RegisterClient(Client(), newClient.ref)
+    val tup = newClient.expectMsgPF() {
+      case Token(token, publicToken) => (token, publicToken)
+    }
+    val newClientToken = tup._1
+    rootActor ! SetToken(newClientToken, tokens(0))
+    newClient.expectMsgPF() {
+      case Token(token, publicToken) =>
+        token should be (tokens(0))
+        publicToken should be (publicTokens(0))
+    }
+  }
 }

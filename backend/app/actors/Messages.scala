@@ -70,10 +70,13 @@ sealed trait InEvent
 // Messages which are sent from the client, and can be deserialized
 sealed trait SerializableInEvent extends InEvent
 
-// Client first connected, give client token for identification
+// Client first connected, store ActorRef
 case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with RootMsg
 
-// Client first connected, give client token for identification
+// Client sends token to "relogin", empty for new client
+case class SetToken(oldToken: String, newToken: String) extends InEvent with RootMsg
+
+// KeepAlive to kill dead clients
 case class KeepAliveTick() extends InEvent with RootMsg
 
 // Client request to list rooms

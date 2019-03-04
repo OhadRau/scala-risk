@@ -50,9 +50,29 @@ class RootActor() extends Actor {
           }
         case None => handleInvalidToken(sender())
       }
-    case RegisterClient(client, actor) => handleRegisterClient(client, actor)
-    case _: KeepAliveTick => checkAlive()
-    case other => logger.debug(other.toString)
+    case msg: RootMsg => handleRootMessage(msg)
+  }
+
+  def handleRootMessage(msg: RootMsg): Unit = {
+    msg match {
+      case RegisterClient(client, actor) => handleRegisterClient(client, actor)
+      case SetToken(oldToken, newToken) => handleSetToken(oldToken, newToken)
+      case _: KeepAliveTick => checkAlive()
+      case other => logger.debug(other.toString)
+    }
+  }
+
+  def handleSetToken(oldToken: String, newToken: String): Unit = {
+    // Find token in clients
+    clients.get(newToken) match {
+      case Some(clientWithActor) =>
+        // if valid, change actorRef to sender()
+        val sender = clients(oldToken).actor
+        clients -= oldToken
+        clients(newToken) = ClientWithActor(clientWithActor.client, sender)
+        sender ! Token(newToken, clients(newToken).client.publicToken)
+      case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
+    }
   }
 
   def handleInvalidToken(sender: ActorRef): Unit = {

@@ -10,7 +10,6 @@ import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
-
 class ChatActorSpec extends TestKitSpec with GivenWhenThen {
   val logger = play.api.Logger(getClass)
 
