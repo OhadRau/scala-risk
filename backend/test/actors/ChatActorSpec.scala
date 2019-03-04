@@ -11,7 +11,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
 
 
-@Ignore
 class ChatActorSpec extends TestKitSpec with GivenWhenThen {
   val logger = play.api.Logger(getClass)
 
