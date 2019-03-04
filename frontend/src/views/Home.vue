@@ -13,7 +13,10 @@
                           v-debounce:500ms="inputChanged"
                           label="Enter Name"
                           v-on:change="(value) => {this.$store.commit('SET_GAME_NAME', value)}"
-                          type="text" color="amber darken-2"
+                          type="text" color="amber"
+                          :append-outer-icon="gameNameValid ? 'check' : ''"
+                          :error="gameNameValid === 'false'"
+                          :success="gameNameValid === 'true'"
                           :loading="gameToken === null"></v-text-field>
           </v-form>
         </v-card-text>

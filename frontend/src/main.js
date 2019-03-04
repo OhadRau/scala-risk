@@ -22,7 +22,7 @@ Vue.use(VueToastr, {
 Vue.use(VueNativeSock, 'ws://localhost:9000/ws', {store, format: 'json'})
 Vue.use(Vuetify, {
   theme: {
-    primary: colors.indigo.darken2, // #E53935
+    primary: colors.indigo, // #E53935
     secondary: colors.indigo.lighten2, // #FFCDD2
     accent: colors.indigo.base // #3F51B5
   }
