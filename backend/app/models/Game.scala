@@ -29,9 +29,10 @@ object Game {
       logger.error("Couldn't load map!")
       return None
     })
-
+    logger.info("Got Map!")
     // Assign turn order
     val shuffled = Random.shuffle(players)
+    logger.info("Shuffled Players!")
     val state: GameState = GameState(shuffled, map)
 
     for (player <- state.players) {
@@ -44,7 +45,6 @@ object Game {
 }
 
 class GameState(val players: Seq[Player] = ArrayBuffer(), val map: Map) {
-  val territories: Seq[Territory] = new ArrayBuffer[Territory]()
 }
 
 object GameState {

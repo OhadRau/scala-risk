@@ -7,7 +7,19 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-case class Territory(id: Int, var owner: Option[Player] = None, var armies: Int = 0, neighbours: ArrayBuffer[Territory] = new ArrayBuffer[Territory]()) {}
+class Territory(val id: Int, maxCapacity: Int, var ownerToken: String = "", var armies: Int = 0,
+                val neighbours: ArrayBuffer[Territory] = new ArrayBuffer[Territory]()) {
+
+}
+
+object Territory {
+  implicit val territoryFormat: Writes[Territory] = (territory: Territory) => Json.obj(
+    "id" -> territory.id,
+    "ownerToken" -> territory.ownerToken,
+    "armies" -> territory.armies,
+    "neighbours" -> territory.neighbours.map(_.id)
+  )
+}
 
 sealed trait MapType {
   val filename: String
@@ -41,9 +53,10 @@ object Map {
   def createMapFromConfiguration(configuration: MapConfiguration): Option[Map] = {
     logger.info(configuration.toString)
     val nameToIndex = mutable.HashMap[String, Int]()
-    val territories: Array[Territory] = configuration.vertices.toArray.zipWithIndex.map { case (vertex, index) =>
-      nameToIndex += (vertex.name -> index)
-      new Territory(index)
+    val territories: Array[Territory] = configuration.vertices.toArray.zipWithIndex.map {
+      case (vertex, index) =>
+        nameToIndex += (vertex.name -> index)
+        new Territory(index, vertex.maxCapacity)
     }
 
     configuration.edges foreach (edge => {
@@ -55,7 +68,6 @@ object Map {
     Some(Map(territories))
   }
 
-  implicit val territoryFormat: Writes[Territory] = Json.writes[Territory]
   implicit val mapFormat: Writes[Map] = Json.writes[Map]
 }
 
