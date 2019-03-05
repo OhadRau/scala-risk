@@ -82,6 +82,14 @@ export class GameState {
   }
 }
 
+export class MapResource {
+  constructor (other) {
+    console.log(JSON.parse(JSON.stringify(other)))
+    this.viewBox = other.resource.viewBox
+    this.territories = other.resource.territories
+  }
+}
+
 export class Err {
   constructor (other) {
     this.message = other.msg
@@ -186,6 +194,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.NotifyGameStarted':
       store.commit(types.GAME_STARTED, new GameState(message))
+      break
+    case 'actors.SendMapResource':
+      store.commit(types.MAP_RESOURCE, new MapResource(message))
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')
