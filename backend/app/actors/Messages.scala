@@ -28,6 +28,9 @@ case class RoomMessage(senderName: String, message: String, timestamp: String) e
 sealed trait GameMsg extends AuthenticatedMsg { val gameId: String }
 case class PlaceArmy(gameId: String, token: String) extends GameMsg with SerializableInEvent
 case class MoveArmy(gameId: String, token: String, armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg with SerializableInEvent
+case class NotifyGameStarted(state: GameState) extends OutEvent
+case class SendMapResource(resource: MapResource) extends OutEvent
+case class NotifyGameState(state: GameState) extends OutEvent
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -57,12 +60,6 @@ case class Err(msg: String) extends OutEvent
 case class Ping(msg: String) extends OutEvent
 
 case class Kill(msg: String) extends OutEvent
-
-
-case class NotifyGameStarted(state: GameState) extends OutEvent
-
-case class NotifyGameState(state: GameState) extends OutEvent
-
 
 // Messages which are read (including sent from ourself to ourself
 sealed trait InEvent
@@ -130,6 +127,7 @@ object OutEvent {
   implicit val nameCheckResultWrite = Json.writes[NameCheckResult]
   implicit val nameAssignResultWrite = Json.writes[NameAssignResult]
   implicit val roomCreationResult = Json.writes[RoomCreationResult]
+  implicit val sendMapResourceWrite = Json.writes[SendMapResource]
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]

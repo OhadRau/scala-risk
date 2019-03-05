@@ -30,6 +30,7 @@ class GameActor(players: Seq[Player]) extends Actor {
   logger.info(s"serialized: \n\n$serialized")
 
   game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
+  game.players foreach (player => player.client.get.actor ! SendMapResource(game.state.map.resource))
 
   override def receive: Receive = {
     case msg: GameMsg =>

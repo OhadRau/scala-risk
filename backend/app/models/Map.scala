@@ -6,6 +6,7 @@ import play.api.libs.functional.syntax._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import scala.xml._
 
 class Territory(val id: Int, maxCapacity: Int, var ownerToken: String = "", var armies: Int = 0,
                 val neighbours: ArrayBuffer[Territory] = new ArrayBuffer[Territory]()) {
@@ -29,28 +30,46 @@ case object DefaultMap extends MapType {
   val filename: String = "default"
 }
 
-case class Map(territories: Seq[Territory] = new ArrayBuffer[Territory]()) {}
+case class Map(territories: Seq[Territory] = new ArrayBuffer[Territory](), resource: MapResource) {}
 
 object Map {
   val logger = play.api.Logger(getClass)
 
   def loadFromFile(map: MapType): Option[Map] = {
-    val bufferedSource = Source.fromFile(s"territoryConfiguration/${map.filename}.json")
+    (getConfiguration(s"territoryConfiguration/${map.filename}/graph.json"), getSVG(s"territoryConfiguration/${map.filename}/map.svg")) match {
+      case (Some(config), Some(svg)) => createMapFromConfiguration(config, svg)
+      case _ => None
+    }
+  }
+
+  def getSVG(path: String): Option[MapResource] = {
+    try {
+      val svg = XML.loadFile(path)
+      val svgGroups: Seq[String] = (svg \ "g") map (_.mkString)
+      val viewBox = (svg \ "@viewBox").toString
+      Some(MapResource(viewBox, svgGroups))
+    } catch {
+      case _: SAXParseException => None
+      case _: MalformedAttributeException => None
+    }
+  }
+
+  def getConfiguration(path: String): Option[MapConfiguration] = {
+    val bufferedSource = Source.fromFile(path)
     val configurationString = bufferedSource.getLines.mkString
     bufferedSource.close()
     val json: JsValue = Json.parse(configurationString)
     json.validate[MapConfiguration] match {
-      case s: JsSuccess[MapConfiguration] => {
+      case s: JsSuccess[MapConfiguration] =>
         val configuration: MapConfiguration = s.get
-        createMapFromConfiguration(configuration)
-      }
-      case e: JsError =>
-        logger.error(s"Error parsing ${map.filename}.json")
+        Some(configuration)
+      case _: JsError =>
+        logger.error(s"Error parsing $path.json")
         None
     }
   }
 
-  def createMapFromConfiguration(configuration: MapConfiguration): Option[Map] = {
+  def createMapFromConfiguration(configuration: MapConfiguration, mapResource: MapResource): Option[Map] = {
     logger.info(configuration.toString)
     val nameToIndex = mutable.HashMap[String, Int]()
     val territories: Array[Territory] = configuration.vertices.toArray.zipWithIndex.map {
@@ -65,10 +84,20 @@ object Map {
       from.neighbours += to
       to.neighbours += from
     })
-    Some(Map(territories))
+    Some(Map(territories, mapResource))
   }
 
-  implicit val mapFormat: Writes[Map] = Json.writes[Map]
+  def unapply(arg: Map): Option[Seq[Territory]] = Some(arg.territories)
+
+  implicit val mapWrites: Writes[Map] = (map: Map) => Json.obj(
+    "territories" -> map.territories
+  )
+}
+
+case class MapResource(viewBox: String, territories: Seq[String])
+
+object MapResource {
+  implicit val mapResourceWrite: Writes[MapResource] = Json.writes[MapResource]
 }
 
 case class Vertex(name: String, maxCapacity: Int)
