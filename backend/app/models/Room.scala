@@ -33,6 +33,11 @@ class Room(roomName: String, var host: ClientWithActor) {
     val joinedMessage= JoinedRoom(roomId, client.client.publicToken)
     clients.values.foreach(_.actor ! joinedMessage)
   }
+
+  def removeClient(token: String): Unit = {
+    clients -= token
+    statuses -= token
+  }
 }
 
 case class RoomStatus(name: String, hostName: String, roomId: String, clientStatus: Seq[ClientStatus])

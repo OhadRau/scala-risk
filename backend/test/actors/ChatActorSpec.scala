@@ -3,13 +3,12 @@ package actors
 import akka.actor.Props
 import akka.testkit.TestProbe
 import models._
-import org.scalatest.{GivenWhenThen, Matchers, MustMatchers}
+import org.scalatest.{GivenWhenThen, Ignore, Matchers, MustMatchers}
+
 import scala.util.Random
 import scala.concurrent.duration._
-
 import scala.collection.mutable.ArrayBuffer
 import scala.language.postfixOps
-
 
 class ChatActorSpec extends TestKitSpec with GivenWhenThen {
   val logger = play.api.Logger(getClass)

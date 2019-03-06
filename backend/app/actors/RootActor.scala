@@ -5,10 +5,12 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import models._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 case class ClientWithActor(client: Client, actor: ActorRef)
 
@@ -46,13 +48,36 @@ class RootActor() extends Actor {
             case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
             case a: RoomMsg => handleRoomMsg(a)
           }
-        case None =>
-          sender() ! Err("Invalid Token")
-          logger.debug("Client with invalid Token")
+        case None => handleInvalidToken(sender())
       }
-    case RegisterClient(client, actor) => handleRegisterClient(client, actor)
-    case _: KeepAliveTick => checkAlive()
-    case other => logger.debug(other.toString)
+    case msg: RootMsg => handleRootMessage(msg)
+  }
+
+  def handleRootMessage(msg: RootMsg): Unit = {
+    msg match {
+      case RegisterClient(client, actor) => handleRegisterClient(client, actor)
+      case SetToken(oldToken, newToken) => handleSetToken(oldToken, newToken)
+      case _: KeepAliveTick => checkAlive()
+      case other => logger.debug(other.toString)
+    }
+  }
+
+  def handleSetToken(oldToken: String, newToken: String): Unit = {
+    // Find token in clients
+    clients.get(newToken) match {
+      case Some(clientWithActor) =>
+        // if valid, change actorRef to sender()
+        val sender = clients(oldToken).actor
+        clients -= oldToken
+        clients(newToken) = ClientWithActor(clientWithActor.client, sender)
+        sender ! Token(newToken, clients(newToken).client.publicToken)
+      case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
+    }
+  }
+
+  def handleInvalidToken(sender: ActorRef): Unit = {
+    sender ! Err("Invalid Token")
+    logger.debug("Client with invalid Token")
   }
 
   def handleRegisterClient(client: Client, actor: ActorRef): Unit = {
@@ -93,6 +118,7 @@ class RootActor() extends Actor {
           case JoinRoom(roomId, token) => joinRoom(roomId, token)
           case StartGame(roomId, token) => startGame(roomId, token)
           case ClientReady(roomId, token) => ready(roomId, token)
+          case LeaveRoom(roomId, token) => leaveRoom(roomId, token)
         }
       case _ =>
         logger.error(s"PLayer with token ${msg.token} tried to join invalid room ${msg.roomId}")
@@ -155,6 +181,21 @@ class RootActor() extends Actor {
     }
   }
 
+  def leaveRoom(roomId: String, token: String)(implicit clientActor: ClientWithActor, room: Room): Unit = {
+    room.removeClient(token)
+    // TODO: Send a message to the client who left?
+    // If player who left was the host, assign a random player to be the host
+    if (room.clients.isEmpty) {
+      rooms -= room.roomId
+    } else if (room.host.client.token == clientActor.client.token) {
+      val random = Random
+      val newHost = room.clients.keySet.iterator.drop(random.nextInt(room.clients.size)).next
+      room.host = room.clients(newHost)
+    }
+    notifyRoomStatus(room)
+    notifyRoomsChanged()
+  }
+
   def ready(roomId: String, token: String)(implicit room: Room): Unit = {
     if (room.clients.contains(token)) {
       room.setReady(token)
@@ -163,6 +204,8 @@ class RootActor() extends Actor {
   }
 
   def startGame(roomId: String, token: String)(implicit clientWithActor: ClientWithActor, room: Room): Unit = {
+    logger.debug("received startGame")
+    logger.debug(s"host: ${room.host.client.token}, token: ${token}")
     if (room.host.client.token == token) {
       if (room.statuses.filter(_._1 != token).values.count(status => status == Waiting()) == 0) {
         logger.debug("Starting Game!")
@@ -177,6 +220,7 @@ class RootActor() extends Actor {
 
         notifyRoomsChanged()
       } else {
+        logger.debug("Sending error message!")
         clientWithActor.actor ! Err("Not everyone in the room is ready.")
       }
     } else {
@@ -217,7 +261,7 @@ class RootActor() extends Actor {
       logger.debug(s"Killing ${clientWithActor.client.name} for inactivity")
       clientWithActor.actor ! Kill("Killed for inactivity")
     }
-    rooms.retain ((_, room) => {
+    rooms.retain((_, room) => {
       room.clients.retain((_, clientWithActor) => clientWithActor.client.alive)
       room.clients.nonEmpty
     })

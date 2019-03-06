@@ -35,6 +35,7 @@ import RoomList from '@/components/Lobby/RoomList'
 import {ClientReady, StartGame} from '@/models/packets'
 import PlayerList from '../components/Lobby/PlayerList'
 import {mapGetters} from 'vuex'
+import {types} from '@/vuex/modules'
 
 export default {
   name: 'Lobby',
@@ -80,6 +81,13 @@ export default {
     playerList () {
       return this.$store.state.game.players
     }
+  },
+  created () {
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === types.GAME_STARTED) {
+        this.$router.replace({name: 'Game'})
+      }
+    })
   },
   components: {PlayerList, RoomList}
 }
