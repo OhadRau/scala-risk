@@ -47,10 +47,14 @@ class GameActor(players: Seq[Player]) extends Actor {
   }
 
   def handlePlaceArmy(): Unit = {
-
+    notifyGameState()
   }
 
   def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
+    notifyGameState()
+  }
 
+  def notifyGameState(): Unit = {
+    game.players foreach(player => player.client.get.actor ! NotifyGameState(game.state))
   }
 }
