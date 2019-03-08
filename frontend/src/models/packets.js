@@ -195,6 +195,9 @@ export function processMessage (store, socket, toastr, message) {
     case 'actors.NotifyGameStarted':
       store.commit(types.GAME_STARTED, new GameState(message))
       break
+    case 'actors.NotifyGameState':
+      store.commit(types.GAME_STATE, new GameState(message))
+      break
     case 'actors.SendMapResource':
       store.commit(types.MAP_RESOURCE, new MapResource(message))
       break
