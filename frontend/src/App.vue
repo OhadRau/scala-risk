@@ -16,6 +16,7 @@
 
 <script>
 import {mapGetters} from 'vuex'
+import {types} from '@/vuex/modules'
 import {processMessage} from './models/packets'
 
 export default {
@@ -32,6 +33,12 @@ export default {
         this.$toastr('success', 'Connected to Server!')
       } else if (mutation.type === 'SOCKET_ONMESSAGE') {
         processMessage(this.$store, this.$socket, this.$toastr, mutation.payload)
+      } else if (mutation.type === types.GAME_RESUME) {
+        const notify = mutation.payload
+        if (notify.name && !notify.game) {
+          this.$router.replace({name: 'Lobby'})
+        }
+        // TODO Game resume
       }
     })
   }

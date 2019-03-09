@@ -6,6 +6,7 @@ export const types = {
   SET_GAME_NAME: 'SET_GAME_NAME',
   VALIDATE_GAME_NAME: 'VALIDATE_GAME_NAME',
   COMMIT_GAME_NAME: 'COMMIT_GAME_NAME',
+  GAME_RESUME: 'GAME_RESUME',
   GAME_ROOM_CREATION_RESULT_OCCURRED: 'GAME_ROOM_CREATION_RESULT_OCCURRED',
   GAME_ROOM_CREATED: 'GAME_ROOM_CREATED',
   GAME_ROOM_JOIN: 'GAME_ROOM_JOIN',
@@ -67,6 +68,14 @@ const mutations = {
     //   })) {
     //   state.joinedRoom = null
     // }
+  },
+  [types.GAME_RESUME] (state, resumeNotification) {
+    if (resumeNotification.name) {
+      state.displayName.name = resumeNotification.name
+    }
+    if (resumeNotification.room) {
+      state.joinedRoom.roomId = resumeNotification.room
+    }
   },
   [types.SET_GAME_NAME] (state, name) {
     state.displayName.name = name

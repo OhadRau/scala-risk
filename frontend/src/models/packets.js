@@ -40,6 +40,14 @@ export class RoomStatusUpdate {
   }
 }
 
+export class NotifyClientResumeStatus {
+  constructor (other) {
+    this.game = other.game === '' ? null : other.game
+    this.name = other.name === '' ? null : other.name
+    this.room = other.room === '' ? null : other.room
+  }
+}
+
 export class NameAssignResult {
   constructor (other) {
     this.success = other.success
@@ -254,6 +262,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')
+      break
+    case 'actors.NotifyClientResumeStatus':
+      store.commit(types.GAME_RESUME, new NotifyClientResumeStatus(message))
       break
     default:
       toastr('info', JSON.stringify(message), 'Un-parsed Socket Message:')
