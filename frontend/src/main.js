@@ -7,6 +7,7 @@ import colors from 'vuetify/es5/util/colors'
 import VueNativeSock from 'vue-native-websocket'
 import 'vuetify/dist/vuetify.min.css'
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
+import '@fortawesome/fontawesome-free/css/all.css'
 // Notification Setup
 // Include mini-toaster (or any other UI-notification library)
 import VueToastr from '@deveodk/vue-toastr'

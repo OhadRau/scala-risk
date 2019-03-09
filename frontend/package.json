@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@deveodk/vue-toastr": "^1.0.4",
+    "@fortawesome/fontawesome-free": "^5.7.2",
     "material-design-icons-iconfont": "^4.0.5",
     "vue": "^2.6.6",
     "vue-debounce": "^1.1.0",

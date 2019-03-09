@@ -3,8 +3,11 @@
     <v-toolbar>
       <v-toolbar-title>Available Rooms</v-toolbar-title>
       <v-spacer/>
+      <v-btn icon @click="refreshRoomList">
+        <v-icon medium>fa-sync {{syncSpin}}</v-icon>
+      </v-btn>
       <v-btn icon @click="roomCreationDialog = true">
-        <v-icon large>add</v-icon>
+        <v-icon medium>fa-plus</v-icon>
       </v-btn>
     </v-toolbar>
     <v-list>
@@ -14,7 +17,6 @@
           :key="room.id"
           @click="joinRoom(room)"
         >
-          <!--TODO: Click Handler-->
           <v-list-tile-content>
             <v-list-tile-title v-text="room.name"></v-list-tile-title>
             <v-list-tile-sub-title v-text="playerCountString(room)"></v-list-tile-sub-title>
@@ -66,18 +68,25 @@
 <script>
 import {types} from '@/vuex/modules'
 import {JoinRoom} from '@/models/packets'
+import { mapGetters } from 'vuex'
+import {ListRoom} from '../../models/packets'
 
 export default {
   computed: {
+    ...mapGetters(['gameToken']),
     rooms () {
       return this.$store.state.game.rooms
+    },
+    syncSpin () {
+      return this.sync ? 'fa-spin' : ''
     }
   },
   data () {
     return {
       roomCreationDialog: false,
       roomCreationName: '',
-      roomCreationProgress: null
+      roomCreationProgress: null,
+      sync: false
     }
   },
   created () {
@@ -90,10 +99,19 @@ export default {
         this.roomCreationProgress = null
         this.roomCreationDialog = false
         this.roomCreationName = null
+      } else if (mutation.type === types.GAME_ROOMS_CHANGED) {
+        if (this.sync) {
+          this.sync = false
+          this.$toastr('success', 'Room Listing is synced!', 'Success')
+        }
       }
     })
   },
   methods: {
+    refreshRoomList () {
+      this.sync = true
+      this.$socket.sendObj(new ListRoom(this.gameToken))
+    },
     joinRoom (room) {
       this.$socket.sendObj(new JoinRoom(this.$store.state.game.token, room.roomId))
     },
