@@ -3,7 +3,8 @@
     <v-flex xs8 d-flex>
       <svg width="100%" viewBox="0 0 2000 700" @click="territoryClicked(-1)">
         <svg :viewBox="mapResource.viewBox">
-          <g v-for="(territory, index) in mapResource.territories" :key="index" v-html="territory"
+        <!-- <circle v-for="(territory, index) in mapResource.territories" :key="index+5" :cx="0" :cy="50" :r="50"/> -->
+          <g v-for="(territory, index) in mapResource.territories" :key="index" v-html="renderTerritory(territory, index)"
              @click.stop="territoryClicked(index)" :class="{clicked:selected === index}">
           </g>
         </svg>
@@ -113,6 +114,12 @@ export default {
   methods: {
     territoryClicked (id) {
       this.selected = id
+    },
+    renderTerritory (territory, index) {
+      var htmlObject = document.createElement('div')
+      htmlObject.innerHTML = territory
+      htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
+      return htmlObject.firstChild.outerHTML
     }
   }
 }
