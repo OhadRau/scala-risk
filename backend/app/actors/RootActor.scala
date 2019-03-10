@@ -39,63 +39,51 @@ class RootActor() extends Actor {
   // TODO: Refactor error checking somewhere
   override def receive: Receive = {
     case msg: AuthenticatedMsg =>
-      clients.get(msg.token) match {
-        case Some(matchedClient) =>
-          implicit val client: ClientWithActor = matchedClient
-          msg match {
-            case a: GameMsg => handleGameMessage(a)
-            case a: ChatMsg => handleChatMessage(a)
-            case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
-            case a: RoomMsg => handleRoomMsg(a)
+      handleAuthenticatedMessage(msg)
+    case msg: RootMsg =>
+      handleUnauthenticatedMessage(msg)
+  }
+
+  def handleAuthenticatedMessage(msg: AuthenticatedMsg) : Unit = clients.get(msg.token) match {
+    case Some(matchedClient) =>
+      implicit val client: ClientWithActor = matchedClient
+      msg match {
+        case ForwardToGame(_, gameId, msg) =>
+          games.get(gameId) match {
+            case Some(gameActor) => gameActor forward msg
+            case None => client.actor ! Err("No game with that id exists!")
           }
-        case None => handleInvalidToken(sender())
+        case ForwardToChat(_, msg) => chatActor forward (client, msg)
+        case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
+        case r: RoomMsg => handleRoomMsg(r)
       }
-    case msg: RootMsg => handleRootMessage(msg)
-  }
-
-  def handleRootMessage(msg: RootMsg): Unit = {
-    msg match {
-      case RegisterClient(client, actor) => handleRegisterClient(client, actor)
-      case SetToken(oldToken, newToken) => handleSetToken(oldToken, newToken)
-      case _: KeepAliveTick => checkAlive()
-      case other => logger.debug(other.toString)
+    case None => {
+      sender ! Err("Invalid Token")
+      logger.debug("Client with invalid Token")
     }
   }
 
-  def handleSetToken(oldToken: String, newToken: String): Unit = {
-    // Find token in clients
-    clients.get(newToken) match {
-      case Some(clientWithActor) =>
-        // if valid, change actorRef to sender()
-        val sender = clients(oldToken).actor
-        clients -= oldToken
-        clients(newToken) = ClientWithActor(clientWithActor.client, sender)
-        sender ! Token(newToken, clients(newToken).client.publicToken)
-      case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
+  def handleUnauthenticatedMessage(msg: RootMsg): Unit = msg match {
+    case RegisterClient(client, actor) => {
+      clients += (client.token -> ClientWithActor(client, actor))
+      logger.debug(s"Generated token ${client.token} for client!\n")
+      actor ! Token(client.token, client.publicToken)
     }
+    case SetToken(oldToken, newToken) =>
+      // Find token in clients
+      clients.get(newToken) match {
+        case Some(clientWithActor) =>
+          // if valid, change actorRef to sender()
+          val sender = clients(oldToken).actor
+          clients -= oldToken
+          clients(newToken) = ClientWithActor(clientWithActor.client, sender)
+          sender ! Token(newToken, clients(newToken).client.publicToken)
+        case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
+      }
+    case KeepAliveTick() => checkAlive()
+    case other => logger.debug(other.toString)
   }
 
-  def handleInvalidToken(sender: ActorRef): Unit = {
-    sender ! Err("Invalid Token")
-    logger.debug("Client with invalid Token")
-  }
-
-  def handleRegisterClient(client: Client, actor: ActorRef): Unit = {
-    clients += (client.token -> ClientWithActor(client, actor))
-    logger.debug(s"Generated token ${client.token} for client!\n")
-    actor ! Token(client.token, client.publicToken)
-  }
-
-  def handleChatMessage(msg: ChatMsg): Unit = {
-    chatActor forward msg
-  }
-
-  def handleGameMessage(msg: GameMsg)(implicit client: ClientWithActor): Unit = {
-    games.get(msg.gameId) match {
-      case Some(gameActor) => gameActor forward msg
-      case None => client.actor ! Err("No game with that id exists!")
-    }
-  }
 
   def handleAuthenticatedRootMessage(authenticatedRootMsg: AuthenticatedRootMsg)(implicit client: ClientWithActor)
   : Unit = {
@@ -113,7 +101,7 @@ class RootActor() extends Actor {
   def handleRoomMsg(msg: RoomMsg)(implicit clientWithActor: ClientWithActor): Unit = {
     rooms.get(msg.roomId) match {
       case Some(matchedRoom) =>
-        implicit val rooom: Room = matchedRoom
+        implicit val room: Room = matchedRoom
         msg match {
           case JoinRoom(roomId, token) => joinRoom(roomId, token)
           case StartGame(roomId, token) => startGame(roomId, token)
