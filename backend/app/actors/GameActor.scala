@@ -30,16 +30,12 @@ class GameActor(players: Seq[Player]) extends Actor {
       throw new RuntimeException("Something went wrong lmao")
   }
 
-  logger.info(s"GAME STATE: \n\n${game.state.map}")
   val a = Json.toJson(game.state.map.territories.head)
-  logger.info(s"Got Write[Territory]: ${a}")
   val b = Json.toJson(game.state.map.territories)
-  logger.info(s"Got Write[Seq[Territory]]: ${b}")
   val c = Json.toJson(game.state.map)
-  logger.info(s"Got Write[Map]: ${c}")
   val serialized = Json.toJson(game.state)
-  logger.info(s"serialized: \n\n$serialized")
 
+  logger.debug(s"There are ${game.players.size} players in this game")
   game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
   game.players foreach (player => player.client.get.actor ! SendMapResource(game.state.map.resource))
 

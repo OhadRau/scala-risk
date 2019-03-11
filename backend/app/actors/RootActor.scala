@@ -9,6 +9,7 @@ import akka.util.Timeout
 import scala.concurrent.ExecutionContext.Implicits.global
 import models._
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
@@ -24,11 +25,12 @@ object RootActor {
 class RootActor() extends Actor {
   implicit val timeout = Timeout(1 second)
 
-  val games: mutable.HashMap[String, ActorRef] = collection.mutable.HashMap[String, ActorRef]()
-  val rooms: mutable.HashMap[String, Room] = collection.mutable.HashMap[String, Room]()
-  val clients: mutable.HashMap[String, ClientWithActor] = collection.mutable.HashMap[String, ClientWithActor]()
+  val games: mutable.HashMap[String, ActorRef] = mutable.HashMap[String, ActorRef]()
+  val rooms: mutable.HashMap[String, Room] = mutable.HashMap[String, Room]()
+  val clients: mutable.HashMap[String, ClientWithActor] = mutable.HashMap[String, ClientWithActor]()
+  val publicToPrivate: mutable.HashMap[String, String] = mutable.HashMap[String, String]()
 
-  val chatActor = context.actorOf(ChatActor.props(clients, rooms), "chatActor")
+  val chatActor = context.actorOf(ChatActor.props(clients, publicToPrivate, rooms), "chatActor")
 
   val logger = play.api.Logger(getClass)
 
@@ -66,6 +68,7 @@ class RootActor() extends Actor {
   def handleUnauthenticatedMessage(msg: RootMsg): Unit = msg match {
     case RegisterClient(client, actor) => {
       clients += (client.token -> ClientWithActor(client, actor))
+      publicToPrivate += (client.publicToken -> client.token)
       logger.debug(s"Generated token ${client.token} for client!\n")
       actor ! Token(client.token, client.publicToken)
     }
@@ -76,7 +79,7 @@ class RootActor() extends Actor {
           // if valid, change actorRef to sender()
           val sender = clients(oldToken).actor
           clients -= oldToken
-          clients(newToken) = ClientWithActor(clientWithActor.client, sender)
+          clients += newToken -> ClientWithActor(clientWithActor.client, sender)
           sender ! Token(newToken, clients(newToken).client.publicToken)
         case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
       }

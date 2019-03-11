@@ -6,10 +6,12 @@ import akka.actor.{Actor, Props}
 import models.Room
 import play.api.libs.json.Json
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable
 
 sealed trait ChatMsg
+
 case class MessageToUser(recipientPublic: String, message: String) extends ChatMsg
+
 case class MessageToRoom(roomId: String, message: String) extends ChatMsg
 
 object SerializableChatMsg {
@@ -19,11 +21,13 @@ object SerializableChatMsg {
 }
 
 object ChatActor {
-  def props(clients: HashMap[String, ClientWithActor], rooms: HashMap[String, Room]): Props =
-    Props(new ChatActor(clients, rooms))
+  def props(clients: mutable.HashMap[String, ClientWithActor], publicKeyMap: mutable.HashMap[String, String],
+            rooms: mutable.HashMap[String, Room]): Props =
+    Props(new ChatActor(clients, publicKeyMap, rooms))
 }
 
-class ChatActor(clients: HashMap[String, ClientWithActor], val rooms: HashMap[String, Room]) extends Actor {
+class ChatActor(val clients: mutable.HashMap[String, ClientWithActor], val publicKeyMap: mutable.HashMap[String,
+  String], val rooms: mutable.HashMap[String, Room]) extends Actor {
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
@@ -40,7 +44,7 @@ class ChatActor(clients: HashMap[String, ClientWithActor], val rooms: HashMap[St
     } yield {
       val playerToken = player.client.publicToken
       val playerActor = player.actor
-      val recipient = clients(publicToken)
+      val recipient = clients(publicKeyMap(publicToken))
       val time = LocalDateTime.now
       recipient.actor ! UserMessage(playerName, playerToken, message, time.toString)
       playerActor ! UserMessage(playerName, playerToken, message, time.toString)
