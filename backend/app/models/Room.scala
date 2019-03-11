@@ -1,7 +1,6 @@
 package models
 
-import actors.{ChatActor, ClientWithActor, JoinedRoom}
-import akka.actor.ActorRef
+import actors.{ClientWithActor, JoinedRoom}
 import play.api.libs.json.Json
 
 import scala.collection.mutable

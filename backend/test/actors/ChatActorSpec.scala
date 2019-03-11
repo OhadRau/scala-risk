@@ -68,7 +68,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
     Then("B can send a message to A using A's public token")
     val message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ornare ut arcu non venenatis. Donec " +
       "nec suscipit turpis, ac congue"
-    rootActor ! ForwardToChat(tokens(1), MessageToUser(publicToken(0), message))
+    rootActor ! MessageToUser(tokens(1), publicToken(0), message)
     clients(1).expectMsgPF() {
       case msg: UserMessage =>
         msg.message should be(message)
@@ -90,7 +90,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
       val name = names(sender)
       val message = Random.alphanumeric take 20 mkString
 
-      rootActor ! ForwardToChat(tokens(sender), MessageToUser(publicToken(-sender + 1), message))
+      rootActor ! MessageToUser(tokens(sender), publicToken(-sender + 1), message)
       clients(1).expectMsgPF() {
         case msg: UserMessage =>
           msg.message should be(message)
@@ -150,7 +150,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
 
     Then("they can send messages to the room")
     val message = "Lorem ipsum"
-    rootActor ! ForwardToChat(tokens(0), MessageToRoom(roomId, message))
+    rootActor ! MessageToRoom(tokens(0), roomId, message)
     clients foreach (client => {
       client.expectMsgPF() {
         case msg: RoomMessage =>
@@ -167,7 +167,7 @@ class ChatActorSpec extends TestKitSpec with GivenWhenThen {
       val name = names(sender)
       val message = Random.alphanumeric take 20 mkString
 
-      rootActor ! ForwardToChat(tokens(sender), MessageToRoom(roomId, message))
+      rootActor ! MessageToRoom(tokens(sender), roomId, message)
       clients foreach (client => {
         client.expectMsgPF() {
           case msg: RoomMessage =>

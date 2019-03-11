@@ -95,6 +95,13 @@ const mutations = {
       territories: change.map.territories
     }
   },
+  [types.GAME_STATE] (state, change) {
+    state.game = {
+      ...state.game,
+      players: change.players,
+      territories: change.map.territories
+    }
+  },
   [types.MAP_RESOURCE] (state, change) {
     state.game = {
       ...state.game,
