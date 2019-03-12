@@ -19,8 +19,8 @@ case class ClientReady(roomId: String, token: String) extends RoomMsg with Seria
 case class StartGame(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 case class LeaveRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 
-case class ForwardToGame(val token: String, val gameId: String, val msg: GameMsg) extends AuthenticatedMsg
-case class ForwardToChat(val token: String, val msg: ChatMsg) extends AuthenticatedMsg
+case class ForwardToGame(token: String, gameId: String, msg: GameMsg) extends AuthenticatedMsg with SerializableInEvent
+case class ForwardToChat(token: String, msg: ChatMsg) extends AuthenticatedMsg with SerializableInEvent
 
 case class UserMessage(senderName: String, publicToken: String, message: String, timestamp: String) extends OutEvent
 case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent
@@ -28,6 +28,8 @@ case class RoomMessage(senderName: String, message: String, timestamp: String) e
 case class NotifyGameStarted(state: GameState) extends OutEvent
 case class SendMapResource(resource: MapResource) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
+case class NotifyGameStart(state: GameState) extends OutEvent
+case class NotifyTurn(publicToken: String) extends OutEvent
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -98,12 +100,12 @@ object SerializableInEvent {
   implicit val listRoomRead = Json.reads[ListRoom]
   implicit val checkNameRead = Json.reads[CheckName]
   implicit val leaveRoomRead = Json.reads[LeaveRoom]
-  implicit val serializableInEventRead = Json.reads[SerializableInEvent]
-
   implicit val gameMsgRead = SerializableGameMsg.gameMsgRead
   implicit val chatMsgRead = SerializableChatMsg.chatMsgRead
   implicit val forwardToGameRead = Json.reads[ForwardToGame]
   implicit val forwardToChatRead = Json.reads[ForwardToChat]
+  implicit val serializableInEventRead = Json.reads[SerializableInEvent]
+
 }
 
 object OutEvent {
@@ -126,6 +128,8 @@ object OutEvent {
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
+  implicit val notifyGameStartWrite = Json.writes[NotifyGameStart]
+  implicit val notifyTurnWrite = Json.writes[NotifyTurn]
 
   implicit val outEventFormat = Json.writes[OutEvent]
   implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[SerializableInEvent, OutEvent]

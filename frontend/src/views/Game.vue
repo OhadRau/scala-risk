@@ -95,6 +95,8 @@
 
 <script>
 import {mapGetters} from 'vuex'
+import {types} from '@/vuex/modules'
+import {PlaceArmy} from '@/models/packets'
 
 export default {
   name: 'Game',
@@ -109,11 +111,18 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['mapResource'])
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken'])
   },
   methods: {
     territoryClicked (id) {
       this.selected = id
+      if (id !== -1) {
+        if (this.getTurn === this.gamePublicToken) {
+          this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
+        } else {
+          this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+        }
+      }
     },
     renderTerritory (territory, index) {
       var htmlObject = document.createElement('div')
@@ -121,6 +130,17 @@ export default {
       htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
       return htmlObject.firstChild.outerHTML
     }
+  },
+  created () {
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === types.NOTIFY_TURN) {
+        if (state.game.turn === state.game.publicToken) {
+          this.$toastr('info', '', 'It is your turn to place an army')
+        } else {
+          this.$toastr('info', '', 'Someone else is placing an army right now')
+        }
+      }
+    })
   }
 }
 </script>

@@ -44,24 +44,33 @@ class RootActor() extends Actor {
       handleAuthenticatedMessage(msg)
     case msg: RootMsg =>
       handleUnauthenticatedMessage(msg)
+    case msg =>
+      logger.info("WTF")
+      logger.info(msg.toString)
   }
 
-  def handleAuthenticatedMessage(msg: AuthenticatedMsg) : Unit = clients.get(msg.token) match {
-    case Some(matchedClient) =>
-      implicit val client: ClientWithActor = matchedClient
-      msg match {
-        case ForwardToGame(_, gameId, msg) =>
+  def handleAuthenticatedMessage(msg: AuthenticatedMsg) : Unit = {
+    logger.info(msg.toString)
+    clients.get(msg.token) match {
+      case Some(matchedClient) =>
+        implicit val client: ClientWithActor = matchedClient
+        logger.info(msg.toString)
+        msg match {
+        case ForwardToGame(_, gameId, gameMsg) =>
           games.get(gameId) match {
-            case Some(gameActor) => gameActor forward msg
-            case None => client.actor ! Err("No game with that id exists!")
-          }
-        case ForwardToChat(_, msg) => chatActor forward (client, msg)
-        case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
-        case r: RoomMsg => handleRoomMsg(r)
+              case Some(gameActor) => gameActor forward gameMsg
+              case None => client.actor ! Err("No game with that id exists!")
+            }
+          case ForwardToChat(_, chatMsg) => chatActor forward(client, chatMsg)
+          case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)
+          case r: RoomMsg => handleRoomMsg(r)
+          case _ =>
+            logger.info("Lol matched none")
+        }
+      case None => {
+        sender ! Err("Invalid Token")
+        logger.debug("Client with invalid Token")
       }
-    case None => {
-      sender ! Err("Invalid Token")
-      logger.debug("Client with invalid Token")
     }
   }
 

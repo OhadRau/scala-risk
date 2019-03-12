@@ -13,7 +13,8 @@ export const types = {
   GAME_PLAYER_LIST_CHANGED: 'GAME_PLAYER_LIST_CHANGED',
   GAME_STARTED: 'GAME_STARTED',
   GAME_STATE: 'GAME_STATE',
-  MAP_RESOURCE: 'MAP_RESOURCE'
+  MAP_RESOURCE: 'MAP_RESOURCE',
+  NOTIFY_TURN: 'NOTIFY_TURN'
 }
 const state = {
   token: null,
@@ -38,7 +39,8 @@ const state = {
     },
     players: [],
     territories: []
-  }
+  },
+  turn: undefined
 }
 const mutations = {
   [types.SET_TOKEN] (state, token) {
@@ -71,6 +73,9 @@ const mutations = {
   },
   [types.GAME_ROOM_CREATED] (state, result) {
   },
+  [types.NOTIFY_TURN] (state, turn) {
+    state.turn = turn.publicToken
+  },
   [types.GAME_ROOM_STATUS_CHANGED] (state, updatePacket) {
     if (state.joinedRoom.roomId === updatePacket.roomId) {
       state.joinedRoom.name = updatePacket.roomName
@@ -91,6 +96,14 @@ const mutations = {
         viewBox: undefined,
         territories: undefined
       },
+      players: change.players,
+      territories: change.map.territories
+    }
+  },
+  [types.GAME_STATE] (state, change) {
+    console.log(change)
+    state.game = {
+      ...state.game,
       players: change.players,
       territories: change.map.territories
     }
@@ -117,6 +130,9 @@ const getters = {
   },
   mapResource (state) {
     return state.game.map
+  },
+  getTurn (state) {
+    return state.turn
   }
 }
 const actions = {

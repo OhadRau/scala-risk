@@ -90,6 +90,26 @@ export class MapResource {
   }
 }
 
+export class NotifyTurn {
+  constructor (other) {
+    console.log(JSON.parse(JSON.stringify(other)))
+    this.publicToken = other.publicToken
+  }
+}
+
+export class PlaceArmy {
+  constructor (token, gameId, territoryId) {
+    this.token = token
+    this.gameId = gameId
+    this.msg = {
+      _type: 'actors.PlaceArmy',
+      token: token,
+      territoryId: territoryId
+    }
+    this._type = 'actors.ForwardToGame'
+  }
+}
+
 export class Err {
   constructor (other) {
     this.message = other.msg
@@ -200,6 +220,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.SendMapResource':
       store.commit(types.MAP_RESOURCE, new MapResource(message))
+      break
+    case 'actors.NotifyTurn':
+      store.commit(types.NOTIFY_TURN, new NotifyTurn(message))
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')
