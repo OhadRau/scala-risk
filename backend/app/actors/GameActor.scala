@@ -6,7 +6,6 @@ import play.api.libs.json.Json
 
 sealed trait GameMsg
 
-case class Test(hi: Int) extends GameMsg
 case class PlaceArmy(token: String, territoryId: Int) extends GameMsg
 
 case class MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg

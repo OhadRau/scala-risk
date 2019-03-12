@@ -44,9 +44,6 @@ class RootActor() extends Actor {
       handleAuthenticatedMessage(msg)
     case msg: RootMsg =>
       handleUnauthenticatedMessage(msg)
-    case msg =>
-      logger.info("WTF")
-      logger.info(msg.toString)
   }
 
   def handleAuthenticatedMessage(msg: AuthenticatedMsg) : Unit = {
