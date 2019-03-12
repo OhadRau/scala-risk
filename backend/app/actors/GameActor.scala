@@ -13,7 +13,6 @@ case class MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) extend
 object SerializableGameMsg {
   implicit val placeArmyRead = Json.reads[PlaceArmy]
   implicit val moveArmyRead = Json.reads[MoveArmy]
-  implicit val testRead = Json.reads[Test]
   implicit val gameMsgRead = Json.reads[GameMsg]
 }
 
