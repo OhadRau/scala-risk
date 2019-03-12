@@ -13,7 +13,7 @@ import scala.util.Random
 
 class Game(val state: GameState) {
   def getPlayerByToken(token: String): Option[Player] = {
-    state.players.find(_.client.get.client.publicToken == token)
+    state.players.find(_.client.get.client.token == token)
   }
 
   def players: Seq[Player] = state.players
@@ -21,32 +21,38 @@ class Game(val state: GameState) {
 
 object Game {
   val logger = play.api.Logger(getClass)
-  private val getArmyAllotmentSize = HashMap(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
+  private val N_PLAYERS_ARMY = HashMap(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
 
-  def apply(players: Seq[Player]): Either[String, Game] =
-    for {
-      map <- Map.loadFromFile("default")
-      () = logger.info("Got Map!")
-    } yield {
-      // Assign turn order
-      val shuffled = Random.shuffle(players)
-      logger.info("Shuffled Players!")
-      val state: GameState = GameState(shuffled, map)
-
-      val armyAllotmentSize = getArmyAllotmentSize(state.players.length)
-
-      state.players foreach (player => {
-        player.unitCount = armyAllotmentSize
-        logger.debug(s"${player.name} got assigned ${player.unitCount} armies")
-      })
-
-      new Game(state)
+  def apply(players: Seq[Player]): Option[Game] = {
+    // Setup Territories
+    val map: Map = Map.loadFromFile(DefaultMap).getOrElse({
+      logger.error("Couldn't load map!")
+      return None
+    })
+    logger.info("Got Map!")
+    // Assign turn order
+    val shuffled = Random.shuffle(players)
+    logger.info("Shuffled Players!")
+    val state: GameState = GameState(shuffled, map)
+    for (player <- state.players) {
+      player.unitCount = N_PLAYERS_ARMY(state.players.length)
+      logger.debug(s"${player.name} got assigned ${player.unitCount} armies")
     }
+
+    Some(new Game(state))
+  }
 }
 
-case class GameState(val players: Seq[Player] = ArrayBuffer(), val map: Map)
+class GameState(var players: Seq[Player] = ArrayBuffer(), val map: Map) {
+}
 
 object GameState {
+  def apply(players: Seq[Player], map: Map): GameState = new GameState(players, map)
+
+  def unapply(state: GameState): Option[(Seq[Player], Map)] = {
+    Some((state.players, state.map))
+  }
+
   /*
   * GameState:
   * {

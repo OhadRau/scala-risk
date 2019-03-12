@@ -1,5 +1,24 @@
 import {types} from '@/vuex/modules'
 
+export class Turns {
+  constructor (token, gameId, playerName, territory) {
+    this.token = token
+    this.gameId = gameId
+    this.playerName = playerName
+    this.territory = territory
+    this._type = 'actors.Turns'
+  }
+}
+
+export class PlaceArmy {
+  constructor (token, gameId, playerName, territory) {
+    this.token = token
+    this.gameId = gameId
+    this.playerName = playerName
+    this.territory = territory
+    this._type = 'actors.PlaceArmy'
+  }
+}
 export class Token {
   constructor (other) {
     this.token = other.token
