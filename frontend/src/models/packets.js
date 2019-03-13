@@ -1,24 +1,5 @@
 import {types} from '@/vuex/modules'
 
-export class Turns {
-  constructor (token, gameId, playerName, territory) {
-    this.token = token
-    this.gameId = gameId
-    this.playerName = playerName
-    this.territory = territory
-    this._type = 'actors.Turns'
-  }
-}
-
-export class PlaceArmy {
-  constructor (token, gameId, playerName, territory) {
-    this.token = token
-    this.gameId = gameId
-    this.playerName = playerName
-    this.territory = territory
-    this._type = 'actors.PlaceArmy'
-  }
-}
 export class Token {
   constructor (other) {
     this.token = other.token
@@ -106,6 +87,26 @@ export class MapResource {
     console.log(JSON.parse(JSON.stringify(other)))
     this.viewBox = other.resource.viewBox
     this.territories = other.resource.territories
+  }
+}
+
+export class NotifyTurn {
+  constructor (other) {
+    console.log(JSON.parse(JSON.stringify(other)))
+    this.publicToken = other.publicToken
+  }
+}
+
+export class PlaceArmy {
+  constructor (token, gameId, territoryId) {
+    this.token = token
+    this.gameId = gameId
+    this.msg = {
+      _type: 'actors.PlaceArmy',
+      token: token,
+      territoryId: territoryId
+    }
+    this._type = 'actors.ForwardToGame'
   }
 }
 
@@ -219,6 +220,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.SendMapResource':
       store.commit(types.MAP_RESOURCE, new MapResource(message))
+      break
+    case 'actors.NotifyTurn':
+      store.commit(types.NOTIFY_TURN, new NotifyTurn(message))
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')

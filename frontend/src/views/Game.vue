@@ -95,7 +95,8 @@
 
 <script>
 import {mapGetters} from 'vuex'
-import {Turns} from '@/models/packets'
+import {types} from '@/vuex/modules'
+import {PlaceArmy} from '@/models/packets'
 
 export default {
   name: 'Game',
@@ -106,44 +107,22 @@ export default {
   },
   data () {
     return {
-      selected: -1,
-      initialization: true,
-      initTurn: 0,
-      playerOrder: this.$store.state.game.game.players
+      selected: -1
     }
   },
-  created () {
-    this.initialization = true
-    // var turn = 0
-    // var done = false
-    // var playerOrder = this.$store.state.game.game.players
-    // var playersWithoutUnits = 0
-    // while (!done) {this.playerOrder[this.initTurn % this.playerOrder.length].name
-    //   if (playersWithoutUnits === playerOrder.length) {
-    //     done = true
-    //   }
-    //   var currentPlayer = turn % playerOrder.length
-    //   if (playerOrder[currentPlayer].unitCount === 0) {
-    //     playersWithoutUnits += 1
-    //   } else {
-    //     while (this.selected === -1) {
-    //     }
-    //   }
-    // }
-  },
   computed: {
-    ...mapGetters(['mapResource'])
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken'])
   },
   methods: {
     territoryClicked (id) {
-      this.$socket.sendObj(new Turns(this.$store.state.game.token,
-        this.$store.state.game.joinedRoom.roomId,
-        this.$store.state.game.displayName.name, id))
       this.selected = id
-      // console.log(this.playerOrder)
-      // console.log('territory with id ' + id + ' selectd')
-      // console.log(this.$store.state.game.game.players['0'].unitCount)
-      // console.log(this.$store.state.game.game)
+      if (id !== -1) {
+        if (this.getTurn === this.gamePublicToken) {
+          this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
+        } else {
+          this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+        }
+      }
     },
     renderTerritory (territory, index) {
       var htmlObject = document.createElement('div')
@@ -151,6 +130,17 @@ export default {
       htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
       return htmlObject.firstChild.outerHTML
     }
+  },
+  created () {
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === types.NOTIFY_TURN) {
+        if (state.game.turn === state.game.publicToken) {
+          this.$toastr('info', '', 'It is your turn to place an army')
+        } else {
+          this.$toastr('info', '', 'Someone else is placing an army right now')
+        }
+      }
+    })
   }
 }
 </script>

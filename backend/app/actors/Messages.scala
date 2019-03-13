@@ -19,19 +19,17 @@ case class ClientReady(roomId: String, token: String) extends RoomMsg with Seria
 case class StartGame(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 case class LeaveRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 
-sealed trait ChatMsg extends AuthenticatedMsg
-case class MessageToUser(token: String, recipientPublic: String, message: String) extends ChatMsg with SerializableInEvent
-case class MessageToRoom(token: String, roomId: String, message: String) extends ChatMsg with SerializableInEvent
+case class ForwardToGame(token: String, gameId: String, msg: GameMsg) extends AuthenticatedMsg with SerializableInEvent
+case class ForwardToChat(token: String, msg: ChatMsg) extends AuthenticatedMsg with SerializableInEvent
+
 case class UserMessage(senderName: String, publicToken: String, message: String, timestamp: String) extends OutEvent
 case class RoomMessage(senderName: String, message: String, timestamp: String) extends OutEvent
 
-sealed trait GameMsg extends AuthenticatedMsg { val gameId: String }
-case class Turns(gameId: String, token: String, playerName: String, territory: Int) extends GameMsg with SerializableInEvent
-case class PlaceArmy(gameId: String, token: String, playerName: String, territory: Int) extends GameMsg with SerializableInEvent
-case class MoveArmy(gameId: String, token: String, armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg with SerializableInEvent
 case class NotifyGameStarted(state: GameState) extends OutEvent
 case class SendMapResource(resource: MapResource) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
+case class NotifyGameStart(state: GameState) extends OutEvent
+case class NotifyTurn(publicToken: String) extends OutEvent
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -92,8 +90,6 @@ case class AssignName(name: String, token: String) extends AuthenticatedRootMsg 
 // Client tries to create room
 case class CreateRoom(roomName: String, token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
-
-
 object SerializableInEvent {
   implicit val assignNameRead = Json.reads[AssignName]
   implicit val joinRoomRead = Json.reads[JoinRoom]
@@ -102,14 +98,14 @@ object SerializableInEvent {
   implicit val startGameRead = Json.reads[StartGame]
   implicit val pongRead = Json.reads[Pong]
   implicit val listRoomRead = Json.reads[ListRoom]
-  implicit val msgToUserRead = Json.reads[MessageToUser]
   implicit val checkNameRead = Json.reads[CheckName]
-  implicit val msgToRoomRead = Json.reads[MessageToRoom]
   implicit val leaveRoomRead = Json.reads[LeaveRoom]
-  implicit val turnsRead = Json.reads[Turns]
-  implicit val placeArmyRead = Json.reads[PlaceArmy]
-  implicit val moveArmyRead = Json.reads[MoveArmy]
+  implicit val gameMsgRead = SerializableGameMsg.gameMsgRead
+  implicit val chatMsgRead = SerializableChatMsg.chatMsgRead
+  implicit val forwardToGameRead = Json.reads[ForwardToGame]
+  implicit val forwardToChatRead = Json.reads[ForwardToChat]
   implicit val serializableInEventRead = Json.reads[SerializableInEvent]
+
 }
 
 object OutEvent {
@@ -132,8 +128,9 @@ object OutEvent {
 
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
+  implicit val notifyGameStartWrite = Json.writes[NotifyGameStart]
+  implicit val notifyTurnWrite = Json.writes[NotifyTurn]
 
   implicit val outEventFormat = Json.writes[OutEvent]
   implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[SerializableInEvent, OutEvent]
 }
-

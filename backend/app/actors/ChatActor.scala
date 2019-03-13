@@ -3,50 +3,62 @@ package actors
 import java.time.LocalDateTime
 
 import akka.actor.{Actor, Props}
-import models.{Game, Room}
+import models.Room
+import play.api.libs.json.Json
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable
 
-object ChatActor {
-  def props(clients: HashMap[String, ClientWithActor], rooms: HashMap[String, Room]): Props =
-    Props(new ChatActor(clients, rooms))
+sealed trait ChatMsg
+
+case class MessageToUser(recipientPublic: String, message: String) extends ChatMsg
+
+case class MessageToRoom(roomId: String, message: String) extends ChatMsg
+
+object SerializableChatMsg {
+  implicit val messageToUserRead = Json.reads[MessageToUser]
+  implicit val messageToRoomRead = Json.reads[MessageToRoom]
+  implicit val chatMsgRead = Json.reads[ChatMsg]
 }
 
-class ChatActor(clients: HashMap[String, ClientWithActor], rooms: HashMap[String, Room]) extends Actor {
+object ChatActor {
+  def props(clients: mutable.HashMap[String, ClientWithActor], publicKeyMap: mutable.HashMap[String, String],
+            rooms: mutable.HashMap[String, Room]): Props =
+    Props(new ChatActor(clients, publicKeyMap, rooms))
+}
+
+class ChatActor(val clients: mutable.HashMap[String, ClientWithActor], val publicKeyMap: mutable.HashMap[String,
+  String], val rooms: mutable.HashMap[String, Room]) extends Actor {
   val logger = play.api.Logger(getClass)
 
   override def receive: Receive = {
     // TODO: Not O(n) search
-    case MessageToUser(token, publicToken, message) => handleMessageToUser(token, publicToken, message)
-    case MessageToRoom(token, roomId, message) => handleMessageToRoom(token, roomId, message)
+    case (player: ClientWithActor, MessageToUser(publicToken, message)) =>
+      handleMessageToUser(player, publicToken, message)
+    case (player: ClientWithActor, MessageToRoom(roomId, message)) =>
+      handleMessageToRoom(player, rooms(roomId), message)
   }
 
-  def handleMessageToUser(token: String, publicToken: String, message: String): Unit = {
-    clients.get(token) match {
-      case Some(client) =>
-        clients.find(_._2.client.publicToken == publicToken) match {
-          case Some((_, recipient)) =>
-            val time = LocalDateTime.now
-            recipient.actor ! UserMessage(client.client.name getOrElse "", client.client.publicToken, message, time.toString)
-            client.actor ! UserMessage(client.client.name getOrElse "", client.client.publicToken, message, time.toString)
-          case None => sender() ! Err("Invalid recipient.")
-        }
-      case None => sender() ! Err("Invalid Token.")
+  def handleMessageToUser(player: ClientWithActor, publicToken: String, message: String): Unit = {
+    for {
+      playerName <- player.client.name
+    } yield {
+      val playerToken = player.client.publicToken
+      val playerActor = player.actor
+      val recipient = clients(publicKeyMap(publicToken))
+      val time = LocalDateTime.now
+      recipient.actor ! UserMessage(playerName, playerToken, message, time.toString)
+      playerActor ! UserMessage(playerName, playerToken, message, time.toString)
     }
   }
 
-  def handleMessageToRoom(token: String, roomId: String, message: String): Unit = {
-    clients.get(token) match {
-      case Some(sender) =>
-        rooms.get(roomId) match {
-          case Some(room) =>
-            val time = LocalDateTime.now
-            room.clients.values foreach (client => {
-              client.actor ! RoomMessage(sender.client.name getOrElse "", message, time.toString)
-            })
-          case None => sender.actor ! Err("Invalid room.")
-        }
-      case None => sender() ! Err("Invalid recipient.")
+  def handleMessageToRoom(player: ClientWithActor, room: Room, message: String): Unit = {
+    for {
+      playerName <- player.client.name
+    } yield {
+      val time = LocalDateTime.now
+      room.clients.values foreach (client => {
+        client.actor ! RoomMessage(playerName, message, time.toString)
+      })
     }
   }
 }

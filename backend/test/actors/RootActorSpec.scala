@@ -252,20 +252,20 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
   it should "allow the host to start the game" in {
     rootActor ! StartGame(roomId, hostToken)
     clients foreach (client => {
-      client.expectMsgPF() {
-        case NotifyGameStarted(state) => state.players foreach (player => {
-          names should contain(player.name)
-          player.unitCount should be((10 - numClients) * 5)
-        })
-        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be(0)
+      for(i <- 0 until 3) {
+        client.expectMsgPF() {
+          case NotifyGameStarted(state) => state.players foreach (player => {
+            names should contain(player.name)
+            player.unitCount should be((10 - numClients) * 5)
+          })
+          case NotifyRoomsChanged(rooms: Seq[RoomBrief]) =>
+            rooms.size should be(0)
+          case SendMapResource(_) =>
+        }
       }
-      client.expectMsgPF() {
-        case NotifyGameStarted(state) => state.players foreach (player => {
-          names should contain(player.name)
-          player.unitCount should be((10 - numClients) * 5)
-        })
-        case NotifyRoomsChanged(rooms: Seq[RoomBrief]) => rooms.size should be(0)
-      }
+    })
+    clients foreach (client => {
+      client.expectNoMessage()
     })
   }
 
