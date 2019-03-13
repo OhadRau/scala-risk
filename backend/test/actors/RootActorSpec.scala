@@ -253,6 +253,7 @@ class RootActorSpec extends TestKitSpec with GivenWhenThen {
     rootActor ! StartGame(roomId, hostToken)
     clients foreach (client => {
       for(i <- 0 until 3) {
+        client.ignoreMsg{case NotifyTurn(_) => true}
         client.expectMsgPF() {
           case NotifyGameStarted(state) => state.players foreach (player => {
             names should contain(player.name)
