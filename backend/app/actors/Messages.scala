@@ -73,7 +73,7 @@ sealed trait SerializableInEvent extends InEvent
 case class RegisterClient(client: Client, actor: ActorRef) extends InEvent with RootMsg
 
 // Client sends token to "relogin", empty for new client
-case class SetToken(oldToken: String, newToken: String) extends InEvent with RootMsg
+case class SetToken(token: String, oldToken: String) extends AuthenticatedRootMsg with SerializableInEvent
 
 // KeepAlive to kill dead clients
 case class KeepAliveTick() extends InEvent with RootMsg
@@ -100,6 +100,7 @@ object SerializableInEvent {
   implicit val readyRead = Json.reads[ClientReady]
   implicit val startGameRead = Json.reads[StartGame]
   implicit val pongRead = Json.reads[Pong]
+  implicit val setTokenRead = Json.reads[SetToken]
   implicit val listRoomRead = Json.reads[ListRoom]
   implicit val checkNameRead = Json.reads[CheckName]
   implicit val leaveRoomRead = Json.reads[LeaveRoom]

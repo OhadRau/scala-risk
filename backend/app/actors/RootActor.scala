@@ -76,17 +76,7 @@ class RootActor() extends Actor {
       logger.debug(s"Generated token ${client.token} for client!\n")
       actor ! Token(client.token, client.publicToken)
     }
-    case SetToken(oldToken, newToken) =>
-      // Find token in clients
-      clients.get(newToken) match {
-        case Some(clientWithActor) =>
-          // if valid, change actorRef to sender()
-          val sender = clients(oldToken).actor
-          clients -= oldToken
-          clients += newToken -> ClientWithActor(clientWithActor.client, sender)
-          sender ! Token(newToken, clients(newToken).client.publicToken)
-        case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
-      }
+
     case KeepAliveTick() => checkAlive()
     case other => logger.debug(other.toString)
   }
@@ -99,6 +89,15 @@ class RootActor() extends Actor {
       case ListRoom(token: String) => sendRoomListing(token)
       case CheckName(token: String, name: String) => checkName(token, name)
       case AssignName(name, token) => assignName(token, name)
+      case SetToken(token, oldToken) =>
+        clients.get(oldToken) match {
+          case Some(clientWithActor) =>
+            val sender = client.actor
+            clients -= token
+            clients += oldToken -> ClientWithActor(client.client, sender)
+            sender ! Token(oldToken, clients(oldToken).client.publicToken)
+          case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
+        }
       case Pong(token) =>
         clients(token).client.alive = true
     }
