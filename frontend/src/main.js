@@ -20,7 +20,7 @@ Vue.use(VueToastr, {
   defaultType: 'info',
   defaultTimeout: 1000
 })
-Vue.use(VueNativeSock, 'ws://localhost:9000/ws', {store, format: 'json'})
+Vue.use(VueNativeSock, `//${window.location.host}/api/ws`, {store, format: 'json'})
 Vue.use(Vuetify, {
   theme: {
     primary: colors.indigo, // #E53935
