@@ -10,6 +10,8 @@ case object PlaceArmies extends TurnPhase
 case object Attack extends TurnPhase
 case object Fortify extends TurnPhase
 
+case object StartGamePlay
+
 object SerializableTurnPhase {
   implicit object turnPhaseWrites extends Writes[TurnPhase] {
     def writes(phase: TurnPhase): JsValue = phase match {
@@ -40,10 +42,8 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
       )
       .flatten
 
-  // TODO: Make this only send once we're in the Play phase
-  notifyPlayerTurn()
-
   override def receive: Receive = {
+    case StartGamePlay => notifyPlayerTurn()
     case PlaceArmy(token: String, territory: Int) =>
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))

@@ -39,7 +39,12 @@ class GameActor(players: Seq[Player]) extends Actor {
   override def receive: Receive = {
     case msg: GameMsg =>
       game.state.gamePhase match {
-        case Setup => setupActor forward msg
+        case Setup =>
+          setupActor forward msg
+          // Game state changed
+          if (game.state.gamePhase == Play) {
+            playActor ! StartGamePlay
+          }
         case Play => playActor forward msg
         case GameOver => ()
       }
