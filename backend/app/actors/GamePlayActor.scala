@@ -3,23 +3,32 @@ package actors
 import akka.actor.{Actor, Props}
 import models.{Game, Player}
 
-object GameSetupActor {
-  def props(players: Seq[Player], game: Game): Props = Props(new GameSetupActor(players, game))
+trait TurnPhase
+
+case object PlaceArmies extends TurnPhase
+case object Attack extends TurnPhase
+case object Fortify extends TurnPhase
+
+object GamePlayActor {
+  def props(players: Seq[Player], game: Game): Props = Props(new GamePlayActor(players, game))
 }
 
-class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
+class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
   val logger = play.api.Logger(getClass)
 
-  game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
-  game.players foreach (player => player.client.get.actor ! SendMapResource(game.state.map.resource))
-
-  // Each player gets N starting units based on Game.armyAllotmentSize
-  var placeArmyOrder: Stream[Player] =
+  // Turn order = (player1, PlaceArmies), (player1, Attack), (player1, Fortify), ...
+  // Repeats infinitely for all players
+  var turnOrder: Stream[(Player, TurnPhase)] =
     Stream
-      .continually(players.toStream)
+      .continually(
+        players.toStream.flatMap(player => Stream(
+          (player, PlaceArmies),
+          (player, Attack),
+          (player, Fortify)
+        ))
+      )
       .flatten
-      .take(game.state.map.territories.size * game.armyAllotmentSize)
-  logger.info(s"Number of army placement turns: ${placeArmyOrder.size}")
+
   notifyPlayerTurn()
 
   override def receive: Receive = {
@@ -32,7 +41,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
   }
 
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {
-    placeArmyOrder match {
+    turnOrder match {
       // Verify that only the player whose turn it is can place armies
       case expectedPlayer #:: nextTurns if expectedPlayer == player =>
         // Get the territory the user clicked on
@@ -42,14 +51,11 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
         if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
           territory.ownerToken = player.client.get.client.token
           territory.armies += 1
-          placeArmyOrder = nextTurns
+          turnOrder = nextTurns
 
           notifyGameState()
           notifyPlayerTurn()
         }
-      case Stream.Empty =>
-        // No more armies left to place, so start the main game
-        startGamePlay()
     }
   }
 
@@ -57,15 +63,8 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
     notifyGameState()
   }
 
-  def startGamePlay(): Unit = {
-    game.state.gamePhase = models.Play
-    game.players foreach (player => player.client.get.actor ! NotifyGamePhaseStart(game.state))
-  }
-
   def notifyPlayerTurn(): Unit = {
-    if (placeArmyOrder.nonEmpty) {
-      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken))
-    }
+    game.players foreach (player => player.client.get.actor ! NotifyTurn(turnOrder.head._1.client.get.client.publicToken))
   }
 
   def notifyGameState(): Unit = {

@@ -10,8 +10,13 @@ import scala.collection.immutable.HashMap
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.Random
 
+trait GamePhase
 
-class Game(val state: GameState) {
+case object Setup extends GamePhase
+case object Play extends GamePhase
+case object GameOver extends GamePhase
+
+class Game(val state: GameState, val armyAllotmentSize: Int) {
   def getPlayerByToken(token: String): Option[Player] = {
     state.players.find(_.client.get.client.publicToken == token)
   }
@@ -40,11 +45,11 @@ object Game {
         logger.debug(s"${player.name} got assigned ${player.unitCount} armies")
       })
 
-      new Game(state)
+      new Game(state, armyAllotmentSize)
     }
 }
 
-case class GameState(val players: Seq[Player] = ArrayBuffer(), val map: Map)
+case class GameState(val players: Seq[Player] = ArrayBuffer(), val map: Map, var gamePhase: GamePhase = Setup)
 
 object GameState {
   /*
