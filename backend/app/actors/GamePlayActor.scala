@@ -40,6 +40,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
       )
       .flatten
 
+  // TODO: Make this only send once we're in the Play phase
   notifyPlayerTurn()
 
   override def receive: Receive = {
@@ -67,6 +68,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
           notifyGameState()
           notifyPlayerTurn()
         }
+      case _ => ()
     }
   }
 
