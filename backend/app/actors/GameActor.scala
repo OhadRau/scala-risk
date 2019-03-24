@@ -39,8 +39,14 @@ class GameActor(players: Seq[Player]) extends Actor {
   logger.debug(s"There are ${game.players.size} players in this game")
   game.players foreach (player => player.client.get.actor ! NotifyGameStarted(game.state))
   game.players foreach (player => player.client.get.actor ! SendMapResource(game.state.map.resource))
-  var placeArmyOrder: Stream[Player] = Stream.continually(players.toStream).flatten.take((game.state.map.territories.size / players.size) * players.size)
-  logger.info(s"size: ${placeArmyOrder.size}")
+
+  // Each player gets N starting units based on Game.armyAllotmentSize
+  var placeArmyOrder: Stream[Player] =
+    Stream
+      .continually(players.toStream)
+      .flatten
+      .take(game.state.map.territories.size * game.armyAllotmentSize)
+  logger.info(s"Number of army placement turns: ${placeArmyOrder.size}")
   notifyPlayerTurn()
 
   override def receive: Receive = {
@@ -53,19 +59,24 @@ class GameActor(players: Seq[Player]) extends Actor {
   }
 
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {
-    logger.info(placeArmyOrder.take(5).mkString)
-    if (player == placeArmyOrder.head) {
-      val territory = game.state.map.territories(territoryId)
-      if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
-        territory.ownerToken = player.client.get.client.token
-        territory.armies += 1
-        placeArmyOrder = placeArmyOrder.tail
-        notifyGameState()
-        notifyPlayerTurn()
-        if (placeArmyOrder.isEmpty) {
-          notifyGameStart()
+    placeArmyOrder match {
+      // Verify that only the player whose turn it is can place armies
+      case expectedPlayer #:: nextTurns if expectedPlayer == player =>
+        // Get the territory the user clicked on
+        val territory = game.state.map.territories(territoryId)
+
+        // If the territory is unclaimed or claimed by this player, this is a valid move
+        if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
+          territory.ownerToken = player.client.get.client.token
+          territory.armies += 1
+          placeArmyOrder = nextTurns
+
+          notifyGameState()
+          notifyPlayerTurn()
         }
-      }
+      case Stream.Empty =>
+        // No more armies left to place, so start the main game
+        notifyGameStart()
     }
   }
 
