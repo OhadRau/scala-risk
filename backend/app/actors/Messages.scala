@@ -110,6 +110,9 @@ object SerializableInEvent {
 }
 
 object OutEvent {
+  implicit val turnPhaseWrites = actors.SerializableTurnPhase.turnPhaseWrites
+  implicit val gamePhaseWrites = models.SerializableGamePhase.gamePhaseWrites
+
   implicit val notifyClientsChangedWrite = Json.writes[NotifyClientsChanged]
   implicit val notifyRoomsChangedWrite = Json.writes[NotifyRoomsChanged]
   implicit val notifyRoomStatusWrite = Json.writes[NotifyRoomStatus]
@@ -134,5 +137,6 @@ object OutEvent {
   implicit val notifyTurnPhaseWrite = Json.writes[NotifyTurnPhase]
 
   implicit val outEventFormat = Json.writes[OutEvent]
+
   implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[SerializableInEvent, OutEvent]
 }

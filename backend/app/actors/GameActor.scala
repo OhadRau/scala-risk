@@ -17,7 +17,7 @@ object SerializableGameMsg {
 }
 
 object GameActor {
-  def props(players: Seq[Player]): Props = Props(new GameSetupActor(players))
+  def props(players: Seq[Player]): Props = Props(new GameActor(players))
 }
 
 class GameActor(players: Seq[Player]) extends Actor {
@@ -33,15 +33,15 @@ class GameActor(players: Seq[Player]) extends Actor {
 
   logger.debug(s"There are ${game.players.size} players in this game")
 
-  val setupActor = GameSetupActor(players, game)
-  val playActor = GamePlayActor(players, game)
+  val setupActor = context.actorOf(GameSetupActor.props(players, game))
+  val playActor = context.actorOf(GamePlayActor.props(players, game))
 
   override def receive: Receive = {
     case msg: GameMsg =>
       game.state.gamePhase match {
         case Setup => setupActor forward msg
         case Play => playActor forward msg
-        case GameOver =>
+        case GameOver => ()
       }
   }
 

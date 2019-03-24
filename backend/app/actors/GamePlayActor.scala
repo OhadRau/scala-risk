@@ -2,12 +2,23 @@ package actors
 
 import akka.actor.{Actor, Props}
 import models.{Game, Player}
+import play.api.libs.json._
 
 trait TurnPhase
 
 case object PlaceArmies extends TurnPhase
 case object Attack extends TurnPhase
 case object Fortify extends TurnPhase
+
+object SerializableTurnPhase {
+  implicit object turnPhaseWrites extends Writes[TurnPhase] {
+    def writes(phase: TurnPhase): JsValue = phase match {
+      case PlaceArmies => Json.toJson("PlaceArmies")
+      case Attack => Json.toJson("Attack")
+      case Fortify => Json.toJson("Fortify")
+    }
+  }
+}
 
 object GamePlayActor {
   def props(players: Seq[Player], game: Game): Props = Props(new GamePlayActor(players, game))

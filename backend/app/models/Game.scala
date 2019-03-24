@@ -16,6 +16,16 @@ case object Setup extends GamePhase
 case object Play extends GamePhase
 case object GameOver extends GamePhase
 
+object SerializableGamePhase {
+  implicit object gamePhaseWrites extends Writes[GamePhase] {
+    def writes(phase: GamePhase): JsValue = phase match {
+      case Setup => Json.toJson("Setup")
+      case Play => Json.toJson("Play")
+      case GameOver => Json.toJson("GameOver")
+    }
+  }
+}
+
 class Game(val state: GameState, val armyAllotmentSize: Int) {
   def getPlayerByToken(token: String): Option[Player] = {
     state.players.find(_.client.get.client.publicToken == token)
@@ -61,8 +71,11 @@ object GameState {
   *   },
   * }
   */
-  implicit val gameStateReads: Writes[GameState] = (
+  implicit val gamePhaseWrites: Writes[GamePhase] =
+    SerializableGamePhase.gamePhaseWrites
+  implicit val gameStateWrites: Writes[GameState] = (
     (JsPath \ "players").write[Seq[Player]] and
-    (JsPath \ "map").write[Map]
+    (JsPath \ "map").write[Map] and
+    (JsPath \ "gamePhase").write[GamePhase]
   )(unlift(GameState.unapply))
 }
