@@ -207,7 +207,7 @@ class RootActor() extends Actor {
         // Create new game
         val playerSeq = rooms(roomId).clients.values.map(client => new Player(
           client.client.name getOrElse "", client = Some(client))).toSeq
-        val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
+        val gameActor = context.actorOf(GameSetupActor.props(playerSeq), s"game-$roomId")
         games += roomId -> gameActor
 
         // Remove room

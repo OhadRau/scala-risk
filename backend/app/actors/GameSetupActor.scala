@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Actor, Props}
-import models.{Game, Player}
+import models.{Game, Player, Setup}
 import play.api.libs.json.Json
 
 sealed trait GameMsg
@@ -16,11 +16,11 @@ object SerializableGameMsg {
   implicit val gameMsgRead = Json.reads[GameMsg]
 }
 
-object GameActor {
-  def props(players: Seq[Player]): Props = Props(new GameActor(players))
+object GameSetupActor {
+  def props(players: Seq[Player]): Props = Props(new GameSetupActor(players))
 }
 
-class GameActor(players: Seq[Player]) extends Actor {
+class GameSetupActor(players: Seq[Player]) extends Actor {
   val logger = play.api.Logger(getClass)
   val game: Game = Game(players) match {
     case Right(createdGame) =>
