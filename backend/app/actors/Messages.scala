@@ -30,6 +30,7 @@ case class SendMapResource(resource: MapResource) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
 case class NotifyGamePhaseStart(state: GameState) extends OutEvent
 case class NotifyTurn(publicToken: String) extends OutEvent
+case class NotifyTurnPhase(publicToken: String, turnPhase: TurnPhase) extends OutEvent
 
 // Messages that are sent to the client
 sealed trait OutEvent
@@ -130,6 +131,7 @@ object OutEvent {
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
   implicit val notifyGameStartWrite = Json.writes[NotifyGamePhaseStart]
   implicit val notifyTurnWrite = Json.writes[NotifyTurn]
+  implicit val notifyTurnPhaseWrite = Json.writes[NotifyTurnPhase]
 
   implicit val outEventFormat = Json.writes[OutEvent]
   implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[SerializableInEvent, OutEvent]

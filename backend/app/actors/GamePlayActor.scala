@@ -43,7 +43,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {
     turnOrder match {
       // Verify that only the player whose turn it is can place armies
-      case expectedPlayer #:: nextTurns if expectedPlayer == player =>
+      case (expectedPlayer, PlaceArmies) #:: nextTurns if expectedPlayer == player =>
         // Get the territory the user clicked on
         val territory = game.state.map.territories(territoryId)
 
@@ -64,7 +64,11 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
   }
 
   def notifyPlayerTurn(): Unit = {
-    game.players foreach (player => player.client.get.actor ! NotifyTurn(turnOrder.head._1.client.get.client.publicToken))
+    turnOrder.head match {
+      case (player, phase) =>
+        val playerToken = player.client.get.client.publicToken
+        game.players foreach (player => player.client.get.actor ! NotifyTurnPhase(playerToken, phase))
+    }
   }
 
   def notifyGameState(): Unit = {
