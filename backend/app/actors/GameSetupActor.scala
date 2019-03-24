@@ -18,8 +18,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
     Stream
       .continually(players.toStream)
       .flatten
-      .take(game.state.map.territories.size)
-      //.take(game.state.map.territories.size * game.armyAllotmentSize)
+      .take(game.state.map.territories.size * game.armyAllotmentSize)
   logger.info(s"Number of army placement turns: ${placeArmyOrder.size}")
   notifyPlayerTurn()
 
