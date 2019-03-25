@@ -63,6 +63,8 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
         if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
           territory.ownerToken = player.client.get.client.token
           territory.armies += 1
+          player.unitCount -= 1
+
           turnOrder = nextTurns
 
           notifyGameState()
