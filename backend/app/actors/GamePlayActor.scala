@@ -60,8 +60,8 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
         val territory = game.state.map.territories(territoryId)
 
         // If the territory is unclaimed or claimed by this player, this is a valid move
-        if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
-          territory.ownerToken = player.client.get.client.token
+        if (territory.ownerToken == player.client.get.client.publicToken || territory.ownerToken == "") {
+          territory.ownerToken = player.client.get.client.publicToken
           territory.armies += 1
           player.unitCount -= 1
 

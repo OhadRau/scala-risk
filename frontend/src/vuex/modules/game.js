@@ -101,7 +101,6 @@ const mutations = {
     }
   },
   [types.GAME_STATE] (state, change) {
-    console.log(change)
     state.game = {
       ...state.game,
       players: change.players,

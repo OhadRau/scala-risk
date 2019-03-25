@@ -23,7 +23,7 @@
               <!--<path-->
                 <!--style="fill:#33ffff;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"-->
                 <!--d="m 29.86012,112.92558 3.212798,5.48066-->
- <!--6.425594,-1.88988 -0.188986,-4.34673 z" id="path4710"/>-->
+           <!--6.425594,-1.88988 -0.188986,-4.34673 z" id="path4710"/>-->
             <!--</g>-->
           <!--</g>-->
           <!--&lt;!&ndash;<g&ndash;&gt;-->
@@ -86,6 +86,9 @@
             <v-card-text>
               Test
             </v-card-text>
+            <v-card-text>
+            You have armies remaining
+            </v-card-text>
           </v-card>
         </v-flex>
       </v-layout>
@@ -115,12 +118,20 @@ export default {
   },
   methods: {
     territoryClicked (id) {
+      console.log(this.gamePublicToken)
+      console.log(this.$store.state)
+
       this.selected = id
       if (id !== -1) {
         if (this.getTurn === this.gamePublicToken) {
-          this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
+          console.log(this.$store.state.game.game.territories[id].ownerToken)
+          if (this.$store.state.game.game.territories[id].ownerToken === this.gamePublicToken || this.$store.state.game.game.territories[id].ownerToken === '') {
+            this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
+          } else {
+            this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+          }
         } else {
-          this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+          this.$toastr('warning', 'Cannot place army', 'This is not your turn')
         }
       }
     },
@@ -134,6 +145,7 @@ export default {
   created () {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === types.NOTIFY_TURN) {
+        console.log('triggered')
         if (state.game.turn === state.game.publicToken) {
           this.$toastr('info', '', 'It is your turn to place an army')
         } else {
