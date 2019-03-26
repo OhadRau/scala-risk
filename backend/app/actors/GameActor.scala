@@ -36,6 +36,8 @@ class GameActor(players: Seq[Player]) extends Actor {
   val setupActor = context.actorOf(GameSetupActor.props(players, game))
   val playActor = context.actorOf(GamePlayActor.props(players, game))
 
+  var started: Boolean = false
+
   override def receive: Receive = {
     case msg: GameMsg =>
       game.state.gamePhase match {
@@ -44,8 +46,14 @@ class GameActor(players: Seq[Player]) extends Actor {
           // Game state changed
           if (game.state.gamePhase == Play) {
             playActor ! StartGamePlay
+            started = true
           }
-        case Play => playActor forward msg
+        case Play =>
+          if (!started) {
+            playActor ! StartGamePlay
+            started = true
+          }
+          playActor forward msg
         case GameOver => ()
       }
   }

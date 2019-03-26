@@ -67,7 +67,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
 
   def notifyPlayerTurn(): Unit = {
     if (placeArmyOrder.nonEmpty) {
-      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken))
+      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken, PlaceArmies))
     }
   }
 
