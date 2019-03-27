@@ -40,7 +40,8 @@ const state = {
     players: [],
     territories: []
   },
-  turn: undefined
+  turn: undefined,
+  turnPhase: undefined
 }
 const mutations = {
   [types.SET_TOKEN] (state, token) {
@@ -75,6 +76,7 @@ const mutations = {
   },
   [types.NOTIFY_TURN] (state, turn) {
     state.turn = turn.publicToken
+    state.turnPhase = turn.turnPhase
   },
   [types.GAME_ROOM_STATUS_CHANGED] (state, updatePacket) {
     if (state.joinedRoom.roomId === updatePacket.roomId) {

@@ -87,7 +87,7 @@
               Test
             </v-card-text>
             <v-card-text>
-            You have armies remaining
+            You have {{armyCount}} armies remaining
             </v-card-text>
           </v-card>
         </v-flex>
@@ -114,17 +114,34 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken'])
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken']),
+    armyCount () {
+      var name = this.getClientName
+      var playersWithCount = this.$store.state.game.game.players
+      var count = 0
+      for (var i = 0; i < playersWithCount.length; i++) {
+        if (playersWithCount[i].name === name) {
+          count = playersWithCount[i].unitCount
+        }
+      }
+      return count
+    },
+    getClientName () {
+      var name = ''
+      var playersWithToken = this.$store.state.game.players
+      for (var i = 0; i < playersWithToken.length; i++) {
+        if (playersWithToken[i].publicToken === this.gamePublicToken) {
+          name = playersWithToken[i].name
+        }
+      }
+      return name
+    }
   },
   methods: {
     territoryClicked (id) {
-      console.log(this.gamePublicToken)
-      console.log(this.$store.state)
-
       this.selected = id
       if (id !== -1) {
         if (this.getTurn === this.gamePublicToken) {
-          console.log(this.$store.state.game.game.territories[id].ownerToken)
           if (this.$store.state.game.game.territories[id].ownerToken === this.gamePublicToken || this.$store.state.game.game.territories[id].ownerToken === '') {
             this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
           } else {
@@ -145,7 +162,6 @@ export default {
   created () {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === types.NOTIFY_TURN) {
-        console.log('triggered')
         if (state.game.turn === state.game.publicToken) {
           this.$toastr('info', '', 'It is your turn to place an army')
         } else {

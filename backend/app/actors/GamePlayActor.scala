@@ -93,7 +93,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
     newArmies += territoryCount
     //TODO: Add continent based new armies, change armies you get per territory
     player.unitCount += newArmies
-    player.client.get.actor ! Ok(s"You got $newArmies new armies")
+    player.client.get.actor ! NotifyNewArmies(newArmies.toString)
     notifyGameState()
   }
 
