@@ -51,8 +51,8 @@ class RootActor() extends Actor {
       case Some(matchedClient) =>
         implicit val client: ClientWithActor = matchedClient
         msg match {
-        case ForwardToGame(_, gameId, gameMsg) =>
-          games.get(gameId) match {
+          case ForwardToGame(_, gameId, gameMsg) =>
+            games.get(gameId) match {
               case Some(gameActor) => gameActor forward gameMsg
               case None => client.actor ! Err("No game with that id exists!")
             }
