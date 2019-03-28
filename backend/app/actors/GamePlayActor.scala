@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Actor, Props}
-import models.{Game, Player}
+import models.{Game, Play, Player}
 import play.api.libs.json._
 
 trait TurnPhase
@@ -27,6 +27,7 @@ object GamePlayActor {
 }
 
 class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
+  game.state.gamePhase = Play
   val logger = play.api.Logger(getClass)
 
   // Turn order = (player1, PlaceArmies), (player1, Attack), (player1, Fortify), ...

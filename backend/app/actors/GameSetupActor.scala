@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Actor, Props}
-import models.{Game, Player}
+import models.{Game, Play, Player}
 
 object GameSetupActor {
   def props(players: Seq[Player], game: Game): Props = Props(new GameSetupActor(players, game))
@@ -50,9 +50,11 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
           notifyGameState()
           notifyPlayerTurn()
         }
+        if (placeArmyOrder.isEmpty) {
+          startGamePlay()
+        }
       case Stream.Empty =>
-        // No more armies left to place, so start the main game
-        startGamePlay()
+        logger.error("Received PlaceArmy, but started game already!");
     }
   }
 
@@ -61,13 +63,16 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
   }
 
   def startGamePlay(): Unit = {
-    game.state.gamePhase = models.Play
+    logger.info("in startGamePlay")
+    game.state.gamePhase = Play
     game.players foreach (player => player.client.get.actor ! NotifyGamePhaseStart(game.state))
+    context.parent ! NotifyGamePhaseStart(game.state)
   }
 
   def notifyPlayerTurn(): Unit = {
     if (placeArmyOrder.nonEmpty) {
-      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken, PlaceArmies))
+      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client
+        .publicToken, PlaceArmies))
     }
   }
 

@@ -36,7 +36,8 @@ class Game(val state: GameState, val armyAllotmentSize: Int) {
 
 object Game {
   val logger = play.api.Logger(getClass)
-  private val getArmyAllotmentSize = HashMap(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
+//  private val getArmyAllotmentSize = HashMap(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
+  private val getArmyAllotmentSize = HashMap(3 -> 2, 4 -> 2, 5 -> 2, 6 -> 1)
 
   def apply(players: Seq[Player]): Either[String, Game] =
     for {
