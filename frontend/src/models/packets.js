@@ -94,6 +94,7 @@ export class NotifyTurn {
   constructor (other) {
     console.log(JSON.parse(JSON.stringify(other)))
     this.publicToken = other.publicToken
+    this.turnPhase = other.turnPhase
   }
 }
 
@@ -223,6 +224,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.NotifyTurn':
       store.commit(types.NOTIFY_TURN, new NotifyTurn(message))
+      break
+    case 'actors.NotifyNewArmies':
+      toastr('info', '', 'You got ' + message.newArmies + ' new armies.')
       break
     case 'actors.Err':
       toastr('error', new Err(message).message, 'Error from Server')

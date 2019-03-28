@@ -18,7 +18,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
     Stream
       .continually(players.toStream)
       .flatten
-      .take(game.state.map.territories.size * game.armyAllotmentSize)
+      .take(game.state.players.size * game.armyAllotmentSize)
   logger.info(s"Number of army placement turns: ${placeArmyOrder.size}")
   notifyPlayerTurn()
 
@@ -39,9 +39,12 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
         val territory = game.state.map.territories(territoryId)
 
         // If the territory is unclaimed or claimed by this player, this is a valid move
-        if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
-          territory.ownerToken = player.client.get.client.token
+        if (territory.ownerToken == player.client.get.client.publicToken || territory.ownerToken == "") {
+          territory.ownerToken = player.client.get.client.publicToken
           territory.armies += 1
+
+          player.unitCount -= 1
+
           placeArmyOrder = nextTurns
 
           notifyGameState()
@@ -64,7 +67,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
 
   def notifyPlayerTurn(): Unit = {
     if (placeArmyOrder.nonEmpty) {
-      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken))
+      game.players foreach (player => player.client.get.actor ! NotifyTurn(placeArmyOrder.head.client.get.client.publicToken, PlaceArmies))
     }
   }
 

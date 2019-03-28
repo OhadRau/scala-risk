@@ -43,7 +43,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
       .flatten
 
   override def receive: Receive = {
-    case StartGamePlay => notifyPlayerTurn()
+    case StartGamePlay => {
+      logger.info("Starting GamePlay Phase!")
+      notifyPlayerTurn()
+    }
     case PlaceArmy(token: String, territory: Int) =>
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
@@ -60,15 +63,19 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
         val territory = game.state.map.territories(territoryId)
 
         // If the territory is unclaimed or claimed by this player, this is a valid move
-        if (territory.ownerToken == player.client.get.client.token || territory.ownerToken == "") {
-          territory.ownerToken = player.client.get.client.token
+        if (territory.ownerToken == player.client.get.client.publicToken || territory.ownerToken == "") {
+          territory.ownerToken = player.client.get.client.publicToken
           territory.armies += 1
+          player.unitCount -= 1
+
           turnOrder = nextTurns
 
           notifyGameState()
           notifyPlayerTurn()
         }
-      case _ => ()
+      case (expectedPlayer, Attack)  #:: nextTurns if expectedPlayer == player =>
+        logger.info("Attack")
+      case _ =>
     }
   }
 
@@ -76,11 +83,30 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
     notifyGameState()
   }
 
+  def notifyNewArmies(player: Player): Unit = {
+    var newArmies: Integer = 0
+    var territoryCount: Integer = 0
+
+    game.state.map.territories foreach (territory => if (territory.ownerToken == player.client.get.client.publicToken) territoryCount += 1)
+
+    //One army for every territories
+    newArmies += territoryCount
+    //TODO: Add continent based new armies, change armies you get per territory
+    player.unitCount += newArmies
+    player.client.get.actor ! NotifyNewArmies(newArmies.toString)
+    notifyGameState()
+  }
+
   def notifyPlayerTurn(): Unit = {
     turnOrder.head match {
       case (player, phase) =>
         val playerToken = player.client.get.client.publicToken
-        game.players foreach (player => player.client.get.actor ! NotifyTurnPhase(playerToken, phase))
+
+        phase match {
+          case PlaceArmies => notifyNewArmies(player)
+        }
+
+        game.players foreach (player => player.client.get.actor ! NotifyTurn(playerToken, phase))
     }
   }
 
