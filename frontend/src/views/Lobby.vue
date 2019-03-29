@@ -70,7 +70,7 @@ export default {
       return currentRoom ? currentRoom.hostToken : ''
     },
     roomReady () {
-      return this.currentRoomPlayerList.length >= 2
+      return this.currentRoomPlayerList.length >= 3
     },
     joinedRoom () {
       return this.$store.state.game.joinedRoom
