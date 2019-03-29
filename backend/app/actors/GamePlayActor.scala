@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, Props, Timers}
 import models.{Game, Play, Player}
 import play.api.libs.json._
 
@@ -9,6 +9,8 @@ trait TurnPhase
 case object PlaceArmies extends TurnPhase
 case object Attack extends TurnPhase
 case object Fortify extends TurnPhase
+
+case class TerritoryReady(id: Int)
 
 case object StartGamePlay
 
@@ -26,58 +28,51 @@ object GamePlayActor {
   def props(players: Seq[Player], game: Game): Props = Props(new GamePlayActor(players, game))
 }
 
-class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
-  game.state.gamePhase = Play
+class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers {
   val logger = play.api.Logger(getClass)
 
-  // Turn order = (player1, PlaceArmies), (player1, Attack), (player1, Fortify), ...
-  // Repeats infinitely for all players
-  var turnOrder: Stream[(Player, TurnPhase)] =
-    Stream
-      .continually(
-        players.toStream.flatMap(player => Stream(
-          (player, PlaceArmies),
-          (player, Attack),
-          (player, Fortify)
-        ))
-      )
-      .flatten
-
   override def receive: Receive = {
-    case StartGamePlay => {
+    case StartGamePlay =>
       logger.info("Starting GamePlay Phase!")
-      notifyPlayerTurn()
-    }
+      // Create timer for each territory
+      game.state.map.territories foreach (territory => {
+        timers.startPeriodicTimer(territory.id, TerritoryReady(territory.id), game.state.map.interval)
+      })
     case PlaceArmy(token: String, territory: Int) =>
+      logger.debug("Got PlaceArmy!")
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
       } yield handlePlaceArmy(player, territory)
     case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
       handleMoveArmy(armyCount, territoryFrom, territoryTo)
+    case TerritoryReady(territoryId: Int) => handleTerritoryReady(territoryId)
   }
 
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {
-    turnOrder match {
-      // Verify that only the player whose turn it is can place armies
-      case (expectedPlayer, PlaceArmies) #:: nextTurns if expectedPlayer == player =>
-        // Get the territory the user clicked on
-        val territory = game.state.map.territories(territoryId)
+    logger.debug(s"Got a handlePlaceArmy with $player and $territoryId")
+    // Check that territory is unclaimed or claimed by player
+    val territory = game.state.map.territories(territoryId)
+    if (territory.ownerToken == player.client.get.client.publicToken || territory.ownerToken == "") {
+      if (player.unitCount > 0) {
+        territory.ownerToken = player.client.get.client.publicToken
+        territory.armies += 1
+        player.unitCount -= 1
 
-        // If the territory is unclaimed or claimed by this player, this is a valid move
-        if (territory.ownerToken == player.client.get.client.publicToken || territory.ownerToken == "") {
-          territory.ownerToken = player.client.get.client.publicToken
-          territory.armies += 1
-          player.unitCount -= 1
-
-          turnOrder = nextTurns
-
-          notifyGameState()
-          notifyPlayerTurn()
-        }
-      case (expectedPlayer, Attack)  #:: nextTurns if expectedPlayer == player =>
-        logger.info("Attack")
-      case _ =>
+        notifyGameState()
+      }
     }
+  }
+
+  /**
+    * Add to player's unit count
+    * @param territoryId id of the territory that is ready
+    */
+  def handleTerritoryReady(territoryId: Int): Unit = {
+    val ownerToken = game.state.map.territories(territoryId).ownerToken
+    for {
+      player <- players.find(p => p.client.forall(c => c.client.publicToken == ownerToken))
+    } yield player.unitCount += 1
+    notifyGameState()
   }
 
   def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
@@ -96,19 +91,6 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
     player.unitCount += newArmies
     player.client.get.actor ! NotifyNewArmies(newArmies.toString)
     notifyGameState()
-  }
-
-  def notifyPlayerTurn(): Unit = {
-    turnOrder.head match {
-      case (player, phase) =>
-        val playerToken = player.client.get.client.publicToken
-
-        phase match {
-          case PlaceArmies => notifyNewArmies(player)
-        }
-
-        game.players foreach (player => player.client.get.actor ! NotifyTurn(playerToken, phase))
-    }
   }
 
   def notifyGameState(): Unit = {

@@ -17,7 +17,7 @@ Vue.use(vueDebounce)
 Vue.use(VueToastr, {
   defaultPosition: 'toast-top-right',
   defaultType: 'info',
-  defaultTimeout: 9999
+  defaultTimeout: 1000
 })
 Vue.use(VueNativeSock, 'ws://localhost:9000/ws', {store, format: 'json'})
 Vue.use(Vuetify, {
@@ -30,7 +30,7 @@ Vue.use(Vuetify, {
 
 Vue.config.productionTip = false
 
-new Vue({
+export default new Vue({
   router,
   store,
   render: h => h(App)

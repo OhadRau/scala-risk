@@ -38,6 +38,7 @@ class GameActor(players: Seq[Player]) extends Actor {
 
   override def receive: Receive = {
     case msg: GameMsg =>
+      logger.debug(s"Current phase: ${game.state.gamePhase}")
       game.state.gamePhase match {
         case Setup =>
           setupActor forward msg

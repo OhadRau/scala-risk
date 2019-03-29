@@ -32,7 +32,10 @@ const state = {
     clientStatus: []
   },
   rooms: [],
-  players: [],
+  players: [{
+    name: null,
+    publicToken: null
+  }],
   game: {
     map: {
       viewBox: null,
@@ -40,7 +43,12 @@ const state = {
     },
     phase: 'Setup',
     players: [],
-    territories: []
+    territories: [{
+      armies: 0,
+      ownerToken: null,
+      neighbours: [],
+      id: 0
+    }]
   },
   turn: null,
   turnPhase: null
@@ -147,7 +155,17 @@ const getters = {
   },
   gamePhase (state) {
     return state.game.phase
+  },
+  armies: (state) => {
+    return state.game.players.find(p => p.name === state.displayName.name).unitCount
+  },
+  getTerritory: (state) => (territoryId) => {
+    return state.game.territories[territoryId]
+  },
+  players: (state) => {
+    return state.game.players
   }
+
 }
 const actions = {
   gameListRoom ({commit, dispatch, state}, {socket}) {

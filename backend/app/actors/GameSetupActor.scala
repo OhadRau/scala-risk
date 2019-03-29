@@ -20,6 +20,7 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
       .flatten
       .take(game.state.players.size * game.armyAllotmentSize)
   logger.info(s"Number of army placement turns: ${placeArmyOrder.size}")
+  logger.info(f"placeArmyOrder: ${placeArmyOrder}")
   notifyPlayerTurn()
 
   override def receive: Receive = {

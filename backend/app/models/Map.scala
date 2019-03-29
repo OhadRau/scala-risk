@@ -5,8 +5,10 @@ import play.api.libs.functional.syntax._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.FiniteDuration
 import scala.io.Source
 import scala.xml._
+import scala.concurrent.duration._
 
 class Territory(val id: Int, maxCapacity: Int, var ownerToken: String = "", var armies: Int = 0,
                 val neighbours: ArrayBuffer[Territory] = new ArrayBuffer[Territory]()) {
@@ -22,15 +24,15 @@ object Territory {
   )
 }
 
-case class Map(territories: Seq[Territory] = new ArrayBuffer[Territory](), resource: MapResource) {}
+case class Map(territories: Seq[Territory] = new ArrayBuffer[Territory](), interval: FiniteDuration, resource: MapResource) {}
 
 object Map {
   val logger = play.api.Logger(getClass)
 
   def loadFromFile(map: String): Either[String, Map] =
     for {
-      config <- getConfiguration(s"territoryConfiguration/${map}/graph.json")
-      svg <- getSVG(s"territoryConfiguration/${map}/map.svg")
+      config <- getConfiguration(s"territoryConfiguration/$map/graph.json")
+      svg <- getSVG(s"territoryConfiguration/$map/map.svg")
     } yield createMapFromConfiguration(config, svg)
 
   def getSVG(path: String): Either[String, MapResource] = {
@@ -75,7 +77,7 @@ object Map {
       from.neighbours += to
       to.neighbours += from
     })
-    Map(territories, mapResource)
+    Map(territories, configuration.interval, mapResource)
   }
 
   def unapply(arg: Map): Option[Seq[Territory]] = Some(arg.territories)
@@ -95,7 +97,7 @@ case class Vertex(name: String, maxCapacity: Int)
 
 case class Edge(from: String, to: String)
 
-case class MapConfiguration(vertices: Seq[Vertex], edges: Seq[Edge])
+case class MapConfiguration(vertices: Seq[Vertex], edges: Seq[Edge], interval: FiniteDuration)
 
 object MapConfiguration {
   implicit val vertexRead: Reads[Vertex] = (
@@ -106,8 +108,10 @@ object MapConfiguration {
     (JsPath \ 0).read[String] and
       (JsPath \ 1).read[String]
     ) (Edge.apply _)
+  implicit val finiteDurationRead: Reads[FiniteDuration] = Reads.of[Long].map(FiniteDuration(_, MILLISECONDS))
   implicit val mapConfigurationRead: Reads[MapConfiguration] = (
     (JsPath \ "vertices").read[Seq[Vertex]] and
-      (JsPath \ "edges").read[Seq[Edge]]
+      (JsPath \ "edges").read[Seq[Edge]] and
+      (JsPath \ "interval").read[FiniteDuration]
     ) (MapConfiguration.apply _)
 }

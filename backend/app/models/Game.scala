@@ -7,6 +7,7 @@ import scala.language.postfixOps
 import play.api.libs.functional.syntax._
 
 import scala.collection.immutable.HashMap
+import scala.concurrent.duration.FiniteDuration
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.Random
 
@@ -37,7 +38,7 @@ class Game(val state: GameState, val armyAllotmentSize: Int) {
 object Game {
   val logger = play.api.Logger(getClass)
 //  private val getArmyAllotmentSize = HashMap(3 -> 35, 4 -> 30, 5 -> 25, 6 -> 20)
-  private val getArmyAllotmentSize = HashMap(3 -> 2, 4 -> 2, 5 -> 2, 6 -> 1)
+  private val getArmyAllotmentSize = HashMap(2 -> 2, 3 -> 2, 4 -> 2, 5 -> 2, 6 -> 1)
 
   def apply(players: Seq[Player]): Either[String, Game] =
     for {
@@ -60,7 +61,7 @@ object Game {
     }
 }
 
-case class GameState(val players: Seq[Player] = ArrayBuffer(), val map: Map, var gamePhase: GamePhase = Setup)
+case class GameState(players: Seq[Player] = ArrayBuffer(), map: Map, var gamePhase: GamePhase = Setup)
 
 object GameState {
   /*
