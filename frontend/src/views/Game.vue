@@ -163,9 +163,9 @@ export default {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === types.NOTIFY_TURN) {
         if (state.game.turn === state.game.publicToken) {
-          this.$toastr('info', '', 'It is your turn to place an army')
+          this.$toastr('info', '', 'It is your turn to ' + mutation.payload.turnPhase)
         } else {
-          this.$toastr('info', '', 'Someone else is placing an army right now')
+          this.$toastr('info', '', 'Someone else\'s turn')
         }
       }
     })
