@@ -67,32 +67,15 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
           territory.ownerToken = player.client.get.client.publicToken
           territory.armies += 1
           player.unitCount -= 1
-          logger.info(turnOrder.toString)
-          if (player.unitCount == 0) {
-            turnOrder = nextTurns
-          }
+
+          turnOrder = nextTurns
 
           notifyGameState()
-
-          if (player.unitCount == 0) {
-            notifyPlayerTurn()
-          }
+          notifyPlayerTurn()
         }
       case (expectedPlayer, Attack)  #:: nextTurns if expectedPlayer == player =>
-        //TODO: Perform the Attacking phase
-        turnOrder = nextTurns
-        logger.info(turnOrder.toString)
         logger.info("Attack")
-        notifyPlayerTurn()
-      case (expectedPlayer, Fortify) #:: nextTurns if expectedPlayer == player =>
-        //TODO: Perform the Fortification phase
-        turnOrder = nextTurns
-        logger.info(turnOrder.toString)
-        logger.info("Fortify")
-        notifyPlayerTurn()
       case _ =>
-        logger.info(turnOrder.toString)
-        logger.info("NONE")
     }
   }
 
@@ -103,7 +86,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor {
   def notifyNewArmies(player: Player): Unit = {
     var newArmies: Integer = 0
     var territoryCount: Integer = 0
-NotifyTurn
+
     game.state.map.territories foreach (territory => if (territory.ownerToken == player.client.get.client.publicToken) territoryCount += 1)
 
     //One army for every territories
@@ -121,7 +104,6 @@ NotifyTurn
 
         phase match {
           case PlaceArmies => notifyNewArmies(player)
-          case _ => ()
         }
 
         game.players foreach (player => player.client.get.actor ! NotifyTurn(playerToken, phase))
