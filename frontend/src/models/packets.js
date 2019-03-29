@@ -92,9 +92,16 @@ export class MapResource {
 
 export class NotifyTurn {
   constructor (other) {
+    console.log('NOTIFY_TURN CONSTRUCTED')
     console.log(JSON.parse(JSON.stringify(other)))
     this.publicToken = other.publicToken
     this.turnPhase = other.turnPhase
+  }
+}
+
+export class NotifyGamePhaseStart {
+  constructor (message) {
+    this.phase = message.state.gamePhase
   }
 }
 
@@ -218,6 +225,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.NotifyGameState':
       store.commit(types.GAME_STATE, new GameState(message))
+      break
+    case 'actors.NotifyGamePhaseStart':
+      store.commit(types.NOTIFY_GAME_PHASE_START, new NotifyGamePhaseStart(message))
       break
     case 'actors.SendMapResource':
       store.commit(types.MAP_RESOURCE, new MapResource(message))

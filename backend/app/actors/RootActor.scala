@@ -101,7 +101,6 @@ class RootActor() extends Actor {
       case AssignName(name, token) => assignName(token, name)
       case Pong(token) =>
         clients(token).client.alive = true
-        logger.debug(s"Client $token Ponged.")
     }
   }
 
@@ -248,7 +247,6 @@ class RootActor() extends Actor {
   }
 
   def checkAlive(): Unit = {
-    logger.debug("Checking Aliveness")
     // Kill all clients who haven't responded since the last keepalive
     val deadClients = clients.values.filter(p => !p.client.alive)
     // TODO: Handle killed clients?

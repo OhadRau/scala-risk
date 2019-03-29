@@ -14,7 +14,8 @@ export const types = {
   GAME_STARTED: 'GAME_STARTED',
   GAME_STATE: 'GAME_STATE',
   MAP_RESOURCE: 'MAP_RESOURCE',
-  NOTIFY_TURN: 'NOTIFY_TURN'
+  NOTIFY_TURN: 'NOTIFY_TURN',
+  NOTIFY_GAME_PHASE_START: 'NOTIFY_GAME_PHASE_START'
 }
 const state = {
   token: null,
@@ -31,17 +32,26 @@ const state = {
     clientStatus: []
   },
   rooms: [],
-  players: [],
+  players: [{
+    name: null,
+    publicToken: null
+  }],
   game: {
     map: {
-      viewBox: undefined,
-      territories: undefined
+      viewBox: null,
+      territories: null
     },
+    phase: 'Setup',
     players: [],
-    territories: []
+    territories: [{
+      armies: 0,
+      ownerToken: null,
+      neighbours: [],
+      id: 0
+    }]
   },
-  turn: undefined,
-  turnPhase: undefined
+  turn: null,
+  turnPhase: null
 }
 const mutations = {
   [types.SET_TOKEN] (state, token) {
@@ -75,6 +85,7 @@ const mutations = {
   [types.GAME_ROOM_CREATED] (state, result) {
   },
   [types.NOTIFY_TURN] (state, turn) {
+    console.log('NOTIFY_TURN COMMITED')
     state.turn = turn.publicToken
     state.turnPhase = turn.turnPhase
   },
@@ -98,6 +109,7 @@ const mutations = {
         viewBox: undefined,
         territories: undefined
       },
+      phase: 'Setup',
       players: change.players,
       territories: change.map.territories
     }
@@ -117,6 +129,12 @@ const mutations = {
         territories: change.territories
       }
     }
+  },
+  [types.NOTIFY_GAME_PHASE_START] (state, change) {
+    state.game = {
+      ...state.game,
+      phase: 'Realtime'
+    }
   }
 }
 const getters = {
@@ -134,7 +152,20 @@ const getters = {
   },
   getTurn (state) {
     return state.turn
+  },
+  gamePhase (state) {
+    return state.game.phase
+  },
+  armies: (state) => {
+    return state.game.players.find(p => p.name === state.displayName.name).unitCount
+  },
+  getTerritory: (state) => (territoryId) => {
+    return state.game.territories[territoryId]
+  },
+  players: (state) => {
+    return state.game.players
   }
+
 }
 const actions = {
   gameListRoom ({commit, dispatch, state}, {socket}) {

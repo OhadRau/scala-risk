@@ -36,26 +36,18 @@ class GameActor(players: Seq[Player]) extends Actor {
   val setupActor = context.actorOf(GameSetupActor.props(players, game))
   val playActor = context.actorOf(GamePlayActor.props(players, game))
 
-  var started: Boolean = false
-
   override def receive: Receive = {
     case msg: GameMsg =>
+      logger.debug(s"Current phase: ${game.state.gamePhase}")
       game.state.gamePhase match {
         case Setup =>
           setupActor forward msg
-          // Game state changed
-          if (game.state.gamePhase == Play) {
-            playActor ! StartGamePlay
-            started = true
-          }
         case Play =>
-          if (!started) {
-            playActor ! StartGamePlay
-            started = true
-          }
           playActor forward msg
         case GameOver => ()
       }
+    case _: NotifyGamePhaseStart =>
+      playActor ! StartGamePlay
   }
 
 }

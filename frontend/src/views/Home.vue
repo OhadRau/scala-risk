@@ -10,7 +10,7 @@
           <v-form v-on:submit.prevent="applyName">
             <v-text-field browser-autocomplete="off"
                           prepend-icon="person"
-                          v-debounce:500ms="inputChanged"
+                          v-debounce:100ms="inputChanged"
                           label="Enter Name"
                           v-on:change="(value) => {this.$store.commit('SET_GAME_NAME', value)}"
                           type="text" color="amber"
