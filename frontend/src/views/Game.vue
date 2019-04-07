@@ -45,7 +45,7 @@
               <v-list-tile
                 v-for="[index, player] in players.entries()"
                 :key="player.publicToken"
-                :color="colors[index]"
+                :color="playerColors[player.publicToken]"
               >
                 <v-list-tile-content>
                   <v-list-tile-title v-text="player.name"></v-list-tile-title>
@@ -77,11 +77,19 @@ export default {
       lastSelected: -1,
       selected: -1,
       myTurn: true,
-      colors: ['red', 'blue', 'green']
+      colors: ['red', 'blue', 'green', 'yellow', 'orange', 'violet']
     }
   },
   computed: {
-    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies'])
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies']),
+    playerColors () {
+      var colorMap = {}
+      var players = this.$store.state.game.players
+      for (var i = 0; i < players.length; i++) {
+        colorMap[players[i].publicToken] = this.colors[i]
+      }
+      return colorMap
+    }
   },
   methods: {
     territoryClicked (id) {
@@ -117,9 +125,15 @@ export default {
       }
     },
     renderTerritory (territory, index) {
+      var owner = this.$store.state.game.game.territories[index].ownerToken
       let htmlObject = document.createElement('div')
       htmlObject.innerHTML = territory
       htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
+      if (owner === '') {
+        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:#d4aa00;stroke-width:0.26458332')
+      } else {
+        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:' + this.playerColors[owner] + ';stroke-width:0.26458332')
+      }
       return htmlObject.firstChild.outerHTML
     },
     getActionName (action) {
