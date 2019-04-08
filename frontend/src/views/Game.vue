@@ -62,7 +62,7 @@
 <script>
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
-import {gameActions, placeArmy, moveArmy} from '@/models/game'
+import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
 
 export default {
   name: 'Game',
@@ -77,7 +77,7 @@ export default {
       lastSelected: -1,
       selected: -1,
       myTurn: true,
-      colors: ['red', 'blue', 'green', 'yellow', 'orange', 'violet']
+      colors: ['red', 'blue', 'black', 'green', 'orange', 'violet']
     }
   },
   computed: {
@@ -94,10 +94,11 @@ export default {
   methods: {
     territoryClicked (id) {
       this.selected = id
+      var owner = this.selected === -1 ? -1 : this.$store.state.game.game.territories[id].ownerToken
       if (this.gamePhase === 'Setup' && this.currentAction === gameActions.PLACE_ARMY) {
         if (this.selected !== -1) {
           if (this.getTurn === this.gamePublicToken) {
-            if (this.$store.state.game.game.territories[id].ownerToken === this.gamePublicToken || this.$store.state.game.game.territories[id].ownerToken === '') {
+            if (owner === this.gamePublicToken || owner === '') {
               this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
             } else {
               this.$toastr('warning', 'Cannot place army', 'This is not your territory')
@@ -110,7 +111,11 @@ export default {
         switch (this.currentAction) {
           case gameActions.PLACE_ARMY:
             if (this.selected !== -1) {
-              placeArmy(this.selected)
+              if (owner === this.gamePublicToken || owner === '') {
+                placeArmy(this.selected)
+              } else {
+                this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+              }
               this.selected = -1
             }
             break
@@ -118,6 +123,26 @@ export default {
             if (this.lastSelected !== -1 && this.selected !== -1) {
               moveArmy(this.lastSelected, this.selected)
               this.selected = -1
+            }
+            break
+          case gameActions.ATTACK:
+            if (this.selected !== -1) {
+              if (owner === this.gamePublicToken || owner === '' || this.lastSelected !== -1) {
+                if (this.lastSelected !== -1 && this.selected !== -1) {
+                  if (owner !== this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
+                    this.$toastr('info', 'Select territory to attack', 'Attack')
+                    attack(this.lastSelected, this.selected)
+                  } else {
+                    this.$toastr('warning', 'Cannot attack', 'Cannot attack own territory')
+                  }
+                  this.selected = -1
+                } else if (this.lastSelected === -1) {
+                  this.$toastr('info', 'Select territory to attack', 'Select adjacent territory to attack')
+                }
+              } else {
+                this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+                this.selected = -1
+              }
             }
             break
         }

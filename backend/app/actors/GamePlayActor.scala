@@ -45,6 +45,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       } yield handlePlaceArmy(player, territory)
     case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
       handleMoveArmy(armyCount, territoryFrom, territoryTo)
+    case AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int) =>
+      for {
+        player <- players.find(p => p.client.forall(c => c.client.token == token))
+      } yield handleAttack(player, territoryFrom, territoryTo)
     case TerritoryReady(territoryId: Int) => handleTerritoryReady(territoryId)
   }
 
@@ -61,6 +65,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
         notifyGameState()
       }
     }
+  }
+
+  def handleAttack(player: Player, territoryFrom: Int, territorTo: Int): Unit = {
+    logger.info(s"Player ${player.name} attacked territory $territorTo from $territoryFrom")
   }
 
   /**
