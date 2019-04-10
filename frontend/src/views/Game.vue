@@ -31,7 +31,16 @@
             <v-card-text>
               <v-list>
                 <v-list-tile>Armies: {{armies}}</v-list-tile>
-                <v-list-tile>Action: {{getActionName(currentAction)}}</v-list-tile>
+                <v-list-tile>
+                  Action:
+                  <v-layout row wrap>
+                    <v-flex xs3 v-for="(key, action) in gameActions" :key="key">
+                      <v-btn flat small :color="action === currentAction ? 'success' : 'normal'" @click.native="currentAction = action">
+                        {{getActionName(action)}} ({{getActionShortcut(action)}})
+                      </v-btn>
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
               </v-list>
             </v-card-text>
           </v-card>
@@ -74,6 +83,7 @@ export default {
   data () {
     return {
       currentAction: gameActions.PLACE_ARMY,
+      gameActions: gameActions,
       lastSelected: -1,
       selected: -1,
       myTurn: true,
@@ -130,6 +140,16 @@ export default {
           return 'Move'
         case gameActions.ATTACK:
           return 'Attack'
+      }
+    },
+    getActionShortcut (action) {
+      switch (action) {
+        case gameActions.PLACE_ARMY:
+          return 'Q'
+        case gameActions.MOVE_ARMY:
+          return 'W'
+        case gameActions.ATTACK:
+          return 'E'
       }
     }
   },
@@ -189,5 +209,4 @@ export default {
   .clicked, .clicked:hover {
     stroke-width: 1.5;
   }
-
 </style>
