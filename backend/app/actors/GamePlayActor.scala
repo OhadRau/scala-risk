@@ -67,8 +67,20 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
     }
   }
 
-  def handleAttack(player: Player, territoryFrom: Int, territorTo: Int): Unit = {
-    logger.info(s"Player ${player.name} attacked territory $territorTo from $territoryFrom")
+  def handleAttack(player: Player, territoryFromId: Int, territoryToId: Int): Unit = {
+    val territoryFrom = game.state.map.territories(territoryFromId)
+    val territoryTo = game.state.map.territories(territoryToId)
+    val playerToken = player.client.get.client.publicToken
+
+    if (territoryFrom.ownerToken == playerToken && territoryTo.ownerToken != playerToken) {
+      if (territoryFrom.neighbours.contains(territoryTo)) {
+        logger.info(s"Player ${player.name} attacked territory $territoryToId from $territoryFromId")
+        for {
+          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
+        } yield player.client.get.actor ! NotifyDefend(territoryToId)
+        notifyGameState()
+      }
+    }
   }
 
   /**
