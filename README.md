@@ -26,3 +26,6 @@ npm run serve
 
 ## Usage
 Check out the [tutorial](https://github.gatech.edu/dbansal36/CS2340Sp19Team22/wiki/Tutorial).
+
+## Design Documentation
+Our [design rationale](https://github.gatech.edu/dbansal36/CS2340Sp19Team22/wiki/Design) is documented here.
