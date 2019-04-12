@@ -48,6 +48,40 @@
         <v-flex md4 pa-1>
           <v-card height="100%">
             <v-card-title>
+              <div class="headline">Armies for Attacking</div>
+            </v-card-title>
+            <v-card-text>
+              <v-radio-group v-model="attackGroup">
+                <v-radio
+                  v-for="n in 3"
+                  :key="n"
+                  :label="`${n} Dice`"
+                  :value="n"
+                ></v-radio>
+              </v-radio-group>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+        <v-flex md4 pa-1>
+          <v-card height="100%">
+            <v-card-title>
+              <div class="headline">Armies for Defending</div>
+            </v-card-title>
+            <v-card-text>
+              <v-radio-group v-model="defendGroup">
+                <v-radio
+                  v-for="n in 3"
+                  :key="n"
+                  :label="`${n} Dice`"
+                  :value="n"
+                ></v-radio>
+              </v-radio-group>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+        <v-flex md4 pa-1>
+          <v-card height="100%">
+            <v-card-title>
               <div class="headline">Players</div>
             </v-card-title>
             <v-card-text>
@@ -87,6 +121,8 @@ export default {
       lastSelected: -1,
       selected: -1,
       myTurn: true,
+      attackGroup: 1,
+      defendGroup: 1,
       colors: ['red', 'blue', 'black', 'green', 'orange', 'violet']
     }
   },
@@ -140,8 +176,25 @@ export default {
               if (owner === this.gamePublicToken || owner === '' || this.lastSelected !== -1) {
                 if (this.lastSelected !== -1 && this.selected !== -1) {
                   if (owner !== this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
-                    this.$toastr('info', 'Select territory to attack', 'Attack')
-                    attack(this.lastSelected, this.selected)
+                    if (this.$store.state.game.game.territories[this.lastSelected].armies <= 1) {
+                      this.$toastr('warning', 'Cannot attack', 'Not enough armies')
+                    } else {
+                      var currArmy = this.$store.state.game.game.territories[this.lastSelected].armies
+                      this.$toastr('info', 'Select territory to attack', 'Attack')
+                      if (this.$store.state.game.game.territories[this.lastSelected].neighbours.includes(this.selected)) {
+                        if (currArmy <= 3) {
+                          if (this.attackGroup <= currArmy - 1) {
+                            attack(this.lastSelected, this.selected, this.attackGroup)
+                          } else {
+                            this.$toastr('warning', 'Reduce number of dices')
+                          }
+                        } else {
+                          attack(this.lastSelected, this.selected, this.attackGroup)
+                        }
+                      } else {
+                        this.$toastr('warning', 'Cannot attack', 'Not an adjacent territory')
+                      }
+                    }
                   } else {
                     this.$toastr('warning', 'Cannot attack', 'Cannot attack own territory')
                   }
