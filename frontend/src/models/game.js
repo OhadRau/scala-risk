@@ -28,10 +28,10 @@ export function moveArmy (from, to) {
   console.log(`moveArmy from ${from} to ${to}`)
 }
 
-export function attack (from, to) {
+export function attack (from, to, w) {
   if (store.getters.getTerritory(from).neighbours.includes(to)) {
     // var aT = new AttackTerritory(store.state.game.token, store.state.game.joinedRoom.roomId, from, to)
-    console.log(`attack territory ${to} from ${from}`)
+    console.log(`attack territory ${to} from ${from} with ${w} armies`)
   } else {
     console.log('territories need to be adjacent')
   }
