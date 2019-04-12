@@ -1,5 +1,5 @@
 import store from '@/vuex/store.js'
-import {PlaceArmy, AttackTerritory} from '@/models/packets'
+import {PlaceArmy} from '@/models/packets'
 import Vue from '@/main.js'
 
 export const gameActions = {

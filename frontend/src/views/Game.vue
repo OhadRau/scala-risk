@@ -130,8 +130,13 @@ export default {
               if (owner === this.gamePublicToken || owner === '' || this.lastSelected !== -1) {
                 if (this.lastSelected !== -1 && this.selected !== -1) {
                   if (owner !== this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
-                    this.$toastr('info', 'Select territory to attack', 'Attack')
-                    attack(this.lastSelected, this.selected)
+                    console.log(this.$store.state.game.game.territories[this.lastSelected])
+                    if (this.$store.state.game.game.territories[this.lastSelected].armies <= 1) {
+                      this.$toastr('warning', 'Cannot attack', 'Not enough armies')
+                    } else {
+                      this.$toastr('info', 'Select territory to attack', 'Attack')
+                      attack(this.lastSelected, this.selected)
+                    }
                   } else {
                     this.$toastr('warning', 'Cannot attack', 'Cannot attack own territory')
                   }
