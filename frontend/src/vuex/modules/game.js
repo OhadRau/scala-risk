@@ -163,7 +163,7 @@ const getters = {
     return state.game.territories[territoryId]
   },
   players: (state) => {
-    return state.game.players
+    return state.players
   }
 
 }

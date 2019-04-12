@@ -118,6 +118,20 @@ export class PlaceArmy {
   }
 }
 
+export class AttackTerritory {
+  constructor (token, gameId, fromTerritoryId, toTerritoryId) {
+    this.token = token
+    this.gameId = gameId
+    this.msg = {
+      _type: 'actors.AttackTerritory',
+      token: token,
+      fromTerritoryId: fromTerritoryId,
+      toTerritoryId: toTerritoryId
+    }
+    this._type = 'actors.ForwardToGame'
+  }
+}
+
 export class Err {
   constructor (other) {
     this.message = other.msg

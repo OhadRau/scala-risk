@@ -45,6 +45,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       } yield handlePlaceArmy(player, territory)
     case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
       handleMoveArmy(armyCount, territoryFrom, territoryTo)
+    case AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int) =>
+      for {
+        player <- players.find(p => p.client.forall(c => c.client.token == token))
+      } yield handleAttack(player, territoryFrom, territoryTo)
     case TerritoryReady(territoryId: Int) => handleTerritoryReady(territoryId)
   }
 
@@ -58,6 +62,22 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
         territory.armies += 1
         player.unitCount -= 1
 
+        notifyGameState()
+      }
+    }
+  }
+
+  def handleAttack(player: Player, territoryFromId: Int, territoryToId: Int): Unit = {
+    val territoryFrom = game.state.map.territories(territoryFromId)
+    val territoryTo = game.state.map.territories(territoryToId)
+    val playerToken = player.client.get.client.publicToken
+
+    if (territoryFrom.ownerToken == playerToken && territoryTo.ownerToken != playerToken) {
+      if (territoryFrom.neighbours.contains(territoryTo)) {
+        logger.info(s"Player ${player.name} attacked territory $territoryToId from $territoryFromId")
+        for {
+          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
+        } yield player.client.get.actor ! NotifyDefend(territoryToId)
         notifyGameState()
       }
     }

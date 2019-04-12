@@ -7,11 +7,12 @@ import play.api.libs.json.Json
 sealed trait GameMsg
 
 case class PlaceArmy(token: String, territoryId: Int) extends GameMsg
-
+case class AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int) extends GameMsg
 case class MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg
 
 object SerializableGameMsg {
   implicit val placeArmyRead = Json.reads[PlaceArmy]
+  implicit val attackTerritoryRead = Json.reads[AttackTerritory]
   implicit val moveArmyRead = Json.reads[MoveArmy]
   implicit val gameMsgRead = Json.reads[GameMsg]
 }

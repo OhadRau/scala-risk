@@ -54,7 +54,7 @@
               <v-list-tile
                 v-for="[index, player] in players.entries()"
                 :key="player.publicToken"
-                :color="colors[index]"
+                :color="playerColors[player.publicToken]"
               >
                 <v-list-tile-content>
                   <v-list-tile-title v-text="player.name"></v-list-tile-title>
@@ -71,7 +71,7 @@
 <script>
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
-import {gameActions, placeArmy, moveArmy} from '@/models/game'
+import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
 
 export default {
   name: 'Game',
@@ -87,19 +87,28 @@ export default {
       lastSelected: -1,
       selected: -1,
       myTurn: true,
-      colors: ['red', 'blue', 'green']
+      colors: ['red', 'blue', 'black', 'green', 'orange', 'violet']
     }
   },
   computed: {
-    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies'])
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies']),
+    playerColors () {
+      var colorMap = {}
+      var players = this.$store.state.game.players
+      for (var i = 0; i < players.length; i++) {
+        colorMap[players[i].publicToken] = this.colors[i]
+      }
+      return colorMap
+    }
   },
   methods: {
     territoryClicked (id) {
       this.selected = id
+      var owner = this.selected === -1 ? -1 : this.$store.state.game.game.territories[id].ownerToken
       if (this.gamePhase === 'Setup' && this.currentAction === gameActions.PLACE_ARMY) {
         if (this.selected !== -1) {
           if (this.getTurn === this.gamePublicToken) {
-            if (this.$store.state.game.game.territories[id].ownerToken === this.gamePublicToken || this.$store.state.game.game.territories[id].ownerToken === '') {
+            if (owner === this.gamePublicToken || owner === '') {
               this.$socket.sendObj(new PlaceArmy(this.$store.state.game.token, this.$store.state.game.joinedRoom.roomId, id))
             } else {
               this.$toastr('warning', 'Cannot place army', 'This is not your territory')
@@ -112,7 +121,11 @@ export default {
         switch (this.currentAction) {
           case gameActions.PLACE_ARMY:
             if (this.selected !== -1) {
-              placeArmy(this.selected)
+              if (owner === this.gamePublicToken || owner === '') {
+                placeArmy(this.selected)
+              } else {
+                this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+              }
               this.selected = -1
             }
             break
@@ -122,14 +135,40 @@ export default {
               this.selected = -1
             }
             break
+          case gameActions.ATTACK:
+            if (this.selected !== -1) {
+              if (owner === this.gamePublicToken || owner === '' || this.lastSelected !== -1) {
+                if (this.lastSelected !== -1 && this.selected !== -1) {
+                  if (owner !== this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
+                    this.$toastr('info', 'Select territory to attack', 'Attack')
+                    attack(this.lastSelected, this.selected)
+                  } else {
+                    this.$toastr('warning', 'Cannot attack', 'Cannot attack own territory')
+                  }
+                  this.selected = -1
+                } else if (this.lastSelected === -1) {
+                  this.$toastr('info', 'Select territory to attack', 'Select adjacent territory to attack')
+                }
+              } else {
+                this.$toastr('warning', 'Cannot place army', 'This is not your territory')
+                this.selected = -1
+              }
+            }
+            break
         }
         this.lastSelected = this.selected
       }
     },
     renderTerritory (territory, index) {
+      var owner = this.$store.state.game.game.territories[index].ownerToken
       let htmlObject = document.createElement('div')
       htmlObject.innerHTML = territory
       htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
+      if (owner === '') {
+        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:#d4aa00;stroke-width:0.26458332')
+      } else {
+        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:' + this.playerColors[owner] + ';stroke-width:0.26458332')
+      }
       return htmlObject.firstChild.outerHTML
     },
     getActionName (action) {
