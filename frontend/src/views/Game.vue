@@ -46,7 +46,7 @@
                 <v-radio
                   v-for="n in 3"
                   :key="n"
-                  :label="`${n} Dice(s)`"
+                  :label="`${n} Dice`"
                   :value="n"
                 ></v-radio>
               </v-radio-group>
@@ -63,7 +63,7 @@
                 <v-radio
                   v-for="n in 3"
                   :key="n"
-                  :label="`${n} Dice(s)`"
+                  :label="`${n} Dice`"
                   :value="n"
                 ></v-radio>
               </v-radio-group>
