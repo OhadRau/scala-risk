@@ -7,7 +7,7 @@ import play.api.libs.json.Json
 sealed trait GameMsg
 
 case class PlaceArmy(token: String, territoryId: Int) extends GameMsg
-case class AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int) extends GameMsg
+case class AttackTerritory(token: String, fromTerritoryId: Int, toTerritoryId: Int, armyCount: Int) extends GameMsg
 case class MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg
 
 object SerializableGameMsg {

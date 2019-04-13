@@ -1,5 +1,5 @@
 import store from '@/vuex/store.js'
-import {PlaceArmy} from '@/models/packets'
+import {PlaceArmy, AttackTerritory} from '@/models/packets'
 import Vue from '@/main.js'
 
 export const gameActions = {
@@ -32,6 +32,8 @@ export function attack (from, to, armyNum) {
   if (store.getters.getTerritory(from).neighbours.includes(to)) {
     // var aT = new AttackTerritory(store.state.game.token, store.state.game.joinedRoom.roomId, from, to)
     console.log(`attack territory ${to} from ${from} with ${armyNum} armies`)
+    Vue.$socket.sendObj(new AttackTerritory(store.state.game.token, store.state.game.joinedRoom.roomId,
+      from, to, armyNum))
   } else {
     console.log('territories need to be adjacent')
   }

@@ -127,14 +127,15 @@ export class PlaceArmy {
 }
 
 export class AttackTerritory {
-  constructor (token, gameId, fromTerritoryId, toTerritoryId) {
+  constructor (token, gameId, fromTerritoryId, toTerritoryId, armyCount) {
     this.token = token
     this.gameId = gameId
     this.msg = {
       _type: 'actors.AttackTerritory',
       token: token,
       fromTerritoryId: fromTerritoryId,
-      toTerritoryId: toTerritoryId
+      toTerritoryId: toTerritoryId,
+      armyCount: armyCount
     }
     this._type = 'actors.ForwardToGame'
   }

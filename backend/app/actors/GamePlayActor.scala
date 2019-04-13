@@ -4,6 +4,8 @@ import akka.actor.{Actor, Props, Timers}
 import models.{Game, Play, Player}
 import play.api.libs.json._
 
+import scala.util.Random
+
 trait TurnPhase
 
 case object PlaceArmies extends TurnPhase
@@ -45,10 +47,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       } yield handlePlaceArmy(player, territory)
     case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
       handleMoveArmy(armyCount, territoryFrom, territoryTo)
-    case AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int) =>
+    case AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int, armyCount: Int) =>
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
-      } yield handleAttack(player, territoryFrom, territoryTo)
+      } yield handleAttack(player, territoryFrom, territoryTo, armyCount)
     case TerritoryReady(territoryId: Int) => handleTerritoryReady(territoryId)
   }
 
@@ -67,17 +69,26 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
     }
   }
 
-  def handleAttack(player: Player, territoryFromId: Int, territoryToId: Int): Unit = {
+  def handleAttack(player: Player, territoryFromId: Int, territoryToId: Int, armyCount: Int): Unit = {
     val territoryFrom = game.state.map.territories(territoryFromId)
     val territoryTo = game.state.map.territories(territoryToId)
     val playerToken = player.client.get.client.publicToken
-
+    val diceRandom = Stream.continually(Random.nextInt(5)+1)
     if (territoryFrom.ownerToken == playerToken && territoryTo.ownerToken != playerToken) {
       if (territoryFrom.neighbours.contains(territoryTo)) {
-        logger.info(s"Player ${player.name} attacked territory $territoryToId from $territoryFromId")
-        for {
-          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
-        } yield player.client.get.actor ! NotifyDefend(territoryToId)
+        val attackRoll = diceRandom.take(armyCount)
+          .toList.sorted(Ordering[Int].reverse)
+          .take(territoryTo.armies)
+        val defenseRoll = diceRandom.take(Math.min(3, territoryTo.armies)).toList
+          .sorted(Ordering[Int].reverse).take(attackRoll.size)
+        (attackRoll zip defenseRoll)
+          .foreach(it =>
+            if (it._1 > it._2) territoryTo.armies -= 1
+            else territoryFrom.armies -= 1
+          )
+//        for {
+//          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
+//        } yield player.client.get.actor ! NotifyDefend(territoryToId)
         notifyGameState()
       }
     }
