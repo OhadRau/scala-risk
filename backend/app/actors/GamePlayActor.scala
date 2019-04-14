@@ -79,8 +79,8 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
         val attackRoll = diceRandom.take(armyCount)
           .toList.sorted(Ordering[Int].reverse)
           .take(territoryTo.armies)
-        val defenseRoll = diceRandom.take(attackRoll.size).toList
-          .sorted(Ordering[Int].reverse)
+        val defenseRoll = diceRandom.take(Math.min(3, territoryTo.armies)).toList
+          .sorted(Ordering[Int].reverse).take(attackRoll.size)
         (attackRoll zip defenseRoll)
           .foreach(it =>
             if (it._1 > it._2) territoryTo.armies -= 1
