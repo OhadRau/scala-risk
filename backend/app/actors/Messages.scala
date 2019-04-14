@@ -93,6 +93,7 @@ case class AssignName(name: String, token: String) extends AuthenticatedRootMsg 
 // Client tries to create room
 case class CreateRoom(roomName: String, token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
+
 object SerializableInEvent {
   implicit val assignNameRead = Json.reads[AssignName]
   implicit val joinRoomRead = Json.reads[JoinRoom]

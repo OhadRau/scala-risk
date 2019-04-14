@@ -179,7 +179,7 @@ export default {
                     if (this.$store.state.game.game.territories[this.lastSelected].armies <= 1) {
                       this.$toastr('warning', 'Cannot attack', 'Not enough armies')
                     } else {
-                      var currArmy = this.$store.state.game.game.territories[this.lastSelected].armies
+                      let currArmy = this.$store.state.game.game.territories[this.lastSelected].armies
                       this.$toastr('info', 'Select territory to attack', 'Attack')
                       if (this.$store.state.game.game.territories[this.lastSelected].neighbours.includes(this.selected)) {
                         if (currArmy <= 3) {
