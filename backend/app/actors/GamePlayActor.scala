@@ -69,17 +69,20 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
     }
   }
 
+  def generateDiceRoll(count: Int): List[Int] = {
+    Stream.continually(new Random(System.currentTimeMillis()).nextInt(5)+1).take(count).toList
+  }
+
   def handleAttack(player: Player, territoryFromId: Int, territoryToId: Int, armyCount: Int): Unit = {
     val territoryFrom = game.state.map.territories(territoryFromId)
     val territoryTo = game.state.map.territories(territoryToId)
     val playerToken = player.client.get.client.publicToken
-    val diceRandom = Stream.continually(Random.nextInt(5)+1)
     if (territoryFrom.ownerToken == playerToken && territoryTo.ownerToken != playerToken) {
       if (territoryFrom.neighbours.contains(territoryTo)) {
-        val attackRoll = diceRandom.take(armyCount)
-          .toList.sorted(Ordering[Int].reverse)
-          .take(territoryTo.armies)
-        val defenseRoll = diceRandom.take(Math.min(3, territoryTo.armies)).toList
+        val attackRoll = generateDiceRoll(armyCount)
+          .sorted(Ordering[Int].reverse)
+          .drop(territoryTo.armies)
+        val defenseRoll = generateDiceRoll(Math.min(3, territoryTo.armies))
           .sorted(Ordering[Int].reverse).take(attackRoll.size)
         (attackRoll zip defenseRoll)
           .foreach(it =>
