@@ -174,26 +174,32 @@ export default {
           case gameActions.ATTACK:
             if (this.selected !== -1) {
               if (owner === this.gamePublicToken || owner === '' || this.lastSelected !== -1) {
+                // Check valid game state
                 if (this.lastSelected !== -1 && this.selected !== -1) {
+                  // Selected 2 blocks
                   if (owner !== this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
-                    if (this.$store.state.game.game.territories[this.lastSelected].armies <= 1) {
-                      this.$toastr('warning', 'Cannot attack', 'Not enough armies')
-                    } else {
-                      let currArmy = this.$store.state.game.game.territories[this.lastSelected].armies
-                      this.$toastr('info', 'Select territory to attack', 'Attack')
+                    // Check if the attack origin is owned by current player.
+                    if (this.$store.state.game.game.territories[this.lastSelected].armies > 1) {
+                      // Check if origin has enough army (more than 1) to attack
+                      let attackingArmyCount = this.$store.state.game.game.territories[this.lastSelected].armies
                       if (this.$store.state.game.game.territories[this.lastSelected].neighbours.includes(this.selected)) {
-                        if (currArmy <= 3) {
-                          if (this.attackGroup <= currArmy - 1) {
+                        // Check Neighbor
+                        if (attackingArmyCount <= 3) {
+                          if (this.attackGroup <= attackingArmyCount - 1) {
+                            this.$toastr('success', 'Attacking!')
                             attack(this.lastSelected, this.selected, this.attackGroup)
                           } else {
                             this.$toastr('warning', 'Reduce number of dices')
                           }
                         } else {
+                          this.$toastr('success', 'Attacking!')
                           attack(this.lastSelected, this.selected, this.attackGroup)
                         }
                       } else {
                         this.$toastr('warning', 'Cannot attack', 'Not an adjacent territory')
                       }
+                    } else {
+                      this.$toastr('warning', 'Cannot attack', 'Not enough armies')
                     }
                   } else {
                     this.$toastr('warning', 'Cannot attack', 'Cannot attack own territory')
