@@ -21,6 +21,12 @@
             <v-list-tile-title v-text="room.name"></v-list-tile-title>
             <v-list-tile-sub-title v-text="playerCountString(room)"></v-list-tile-sub-title>
           </v-list-tile-content>
+          <v-list-tile-action>
+            <v-list-tile-action-text>
+              <v-chip disabled color="success" v-if="room.playing">Playing</v-chip>
+              <v-chip disabled color="primary" v-else>Waiting</v-chip>
+            </v-list-tile-action-text>
+          </v-list-tile-action>
         </v-list-tile>
         <v-divider></v-divider>
         <v-subheader>{{rooms.length}} Rooms(s) found</v-subheader>

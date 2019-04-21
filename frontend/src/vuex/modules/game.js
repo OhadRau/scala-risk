@@ -2,11 +2,13 @@ import {ListRoom, CheckName, AssignName, CreateRoom} from '@/models/packets'
 
 export const types = {
   SET_TOKEN: 'GAME_SET_TOKEN',
+  GAME_SEND_AUTHENTICATE: 'GAME_SEND_AUTHENTICATE',
   GAME_ROOMS_CHANGED: 'GAME_ROOMS_CHANGED',
   SET_GAME_NAME: 'SET_GAME_NAME',
   VALIDATE_GAME_NAME: 'VALIDATE_GAME_NAME',
   COMMIT_GAME_NAME: 'COMMIT_GAME_NAME',
   GAME_RESUME: 'GAME_RESUME',
+  GAME_ROOM_LEAVE: 'GAME_ROOM_LEAVE',
   GAME_ROOM_CREATION_RESULT_OCCURRED: 'GAME_ROOM_CREATION_RESULT_OCCURRED',
   GAME_ROOM_CREATED: 'GAME_ROOM_CREATED',
   GAME_ROOM_JOIN: 'GAME_ROOM_JOIN',
@@ -20,6 +22,7 @@ export const types = {
 }
 const state = {
   token: null,
+  attemptedAuthentication: false,
   publicToken: null,
   displayName: {
     name: '',
@@ -30,6 +33,7 @@ const state = {
     name: '',
     roomId: null,
     hostToken: '',
+    playing: false,
     clientStatus: []
   },
   rooms: [],
@@ -38,6 +42,7 @@ const state = {
     publicToken: null
   }],
   game: {
+    started: false,
     map: {
       viewBox: null,
       territories: null
@@ -55,9 +60,22 @@ const state = {
   turnPhase: null
 }
 const mutations = {
+  [types.GAME_SEND_AUTHENTICATE] (state) {
+    state.attemptedAuthentication = true
+  },
   [types.SET_TOKEN] (state, token) {
     state.token = token.token
     state.publicToken = token.publicToken
+  },
+  [types.GAME_ROOM_LEAVE] (state, payload) {
+    if (payload.roomLeft) {
+      state.joinedRoom = {
+        name: '',
+        roomId: null,
+        hostToken: '',
+        clientStatus: []
+      }
+    }
   },
   [types.GAME_ROOMS_CHANGED] (state, roomChangePacket) {
     state.rooms = roomChangePacket.rooms
@@ -114,6 +132,7 @@ const mutations = {
   },
   [types.GAME_STARTED] (state, change) {
     state.game = {
+      started: true,
       map: {
         viewBox: undefined,
         territories: undefined
@@ -147,6 +166,9 @@ const mutations = {
   }
 }
 const getters = {
+  gameRoomRoomId (state) {
+    return state.joinedRoom.roomId
+  },
   gameToken (state) {
     return state.token
   },
@@ -166,7 +188,7 @@ const getters = {
     return state.game.phase
   },
   armies: (state) => {
-    return state.game.players.find(p => p.name === state.displayName.name).unitCount
+    return (state.game.players.find(p => p.name === state.displayName.name)) ? (state.game.players.find(p => p.name === state.displayName.name).unitCount) : 0
   },
   getTerritory: (state) => (territoryId) => {
     return state.game.territories[territoryId]

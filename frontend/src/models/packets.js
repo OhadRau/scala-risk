@@ -37,6 +37,7 @@ export class RoomStatusUpdate {
     this.roomName = other.roomStatus.name
     this.roomId = other.roomStatus.roomId
     this.clientStatus = other.roomStatus.clientStatus
+    this.playing = other.roomStatus.playing
   }
 }
 
@@ -147,10 +148,32 @@ export class Err {
   }
 }
 
-export class ClientReady {
+export class NotifyRoomLeaveStatus {
+  constructor (other) {
+    this.roomLeft = other.roomLeft
+  }
+}
+
+export class LeaveRoom {
   constructor (token, roomId) {
     this.token = token
     this.roomId = roomId
+    this._type = 'actors.LeaveRoom'
+  }
+}
+export class SetToken {
+  constructor (oldToken, token) {
+    this.oldToken = oldToken
+    this.token = token
+    this._type = 'actors.SetToken'
+  }
+}
+
+export class ClientReady {
+  constructor (token, roomId, ready = true) {
+    this.token = token
+    this.roomId = roomId
+    this.ready = ready
     this._type = 'actors.ClientReady'
   }
 }
@@ -206,8 +229,12 @@ export function processMessage (store, socket, toastr, message) {
   switch (message._type) {
     case 'actors.Token':
       const packet = new Token(message)
+      if (!store.state.game.attemptedAuthentication) {
+        store.commit(types.GAME_SEND_AUTHENTICATE)
+        const oldToken = store.state.game.token
+        socket.sendObj(new SetToken(oldToken || '', packet.token))
+      }
       store.commit(types.SET_TOKEN, packet)
-      store.dispatch('gameListRoom', {socket})
       break
     case 'actors.Ping':
       socket.sendObj(new Pong(store.state.game.token))
@@ -240,6 +267,7 @@ export function processMessage (store, socket, toastr, message) {
     case 'actors.NameAssignResult':
       const nameAssignmentResult = new NameAssignResult(message)
       if (store.state.game.displayName.name === nameAssignmentResult.name) {
+        store.dispatch('gameListRoom', {socket})
         store.commit(types.COMMIT_GAME_NAME, nameAssignmentResult)
       }
       break
@@ -266,6 +294,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.NotifyClientResumeStatus':
       store.commit(types.GAME_RESUME, new NotifyClientResumeStatus(message))
+      break
+    case 'actors.NotifyRoomLeaveStatus':
+      store.commit(types.GAME_ROOM_LEAVE, new NotifyRoomLeaveStatus(message))
       break
     default:
       toastr('info', JSON.stringify(message), 'Un-parsed Socket Message:')

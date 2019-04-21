@@ -52,6 +52,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
         player <- players.find(p => p.client.forall(c => c.client.token == token))
       } yield handleAttack(player, territoryFrom, territoryTo, armyCount)
     case TerritoryReady(territoryId: Int) => handleTerritoryReady(territoryId)
+    case req: GameRequestInfo => notifyGameState()
   }
 
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {
@@ -81,17 +82,19 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       if (territoryFrom.neighbours.contains(territoryTo)) {
         val attackRoll = generateDiceRoll(armyCount)
           .sorted(Ordering[Int].reverse)
-          .drop(territoryTo.armies)
+          .take(territoryTo.armies)
         val defenseRoll = generateDiceRoll(Math.min(3, territoryTo.armies))
           .sorted(Ordering[Int].reverse).take(attackRoll.size)
         (attackRoll zip defenseRoll)
-          .foreach(it =>
-            if (it._1 > it._2) territoryTo.armies -= 1
-            else territoryFrom.armies -= 1
+          .foreach(it => {
+              logger.info(s"Fighting: $it")
+              if (it._1 > it._2) territoryTo.armies -= 1
+              else territoryFrom.armies -= 1
+            }
           )
-//        for {
-//          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
-//        } yield player.client.get.actor ! NotifyDefend(territoryToId)
+        //        for {
+        //          player <- players.find(p => p.client.forall(c => c.client.publicToken == territoryTo.ownerToken))
+        //        } yield player.client.get.actor ! NotifyDefend(territoryToId)
         notifyGameState()
       }
     }

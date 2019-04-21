@@ -15,7 +15,7 @@ sealed trait RoomMsg extends AuthenticatedMsg { val roomId: String }
 // Client tries to join room
 case class JoinRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 // Client marks himself ready
-case class ClientReady(roomId: String, token: String) extends RoomMsg with SerializableInEvent
+case class ClientReady(roomId: String, token: String, ready: Boolean = true) extends RoomMsg with SerializableInEvent
 case class StartGame(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 case class LeaveRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 
@@ -37,11 +37,15 @@ case class NotifyDefend(territoryId: Int) extends OutEvent
 // Messages that are sent to the client
 sealed trait OutEvent
 
+case class NotifyClientResumeStatus(name: String, room: String, game: String) extends OutEvent
+
 case class NotifyClientsChanged(strings: Seq[ClientBrief]) extends OutEvent
 
 case class NotifyRoomsChanged(rooms: Seq[RoomBrief]) extends OutEvent
 
 case class NotifyRoomStatus(roomStatus: RoomStatus) extends OutEvent
+
+case class NotifyRoomLeaveStatus(roomLeft: String) extends OutEvent
 
 case class Token(token: String, publicToken: String) extends OutEvent
 
@@ -93,6 +97,7 @@ case class AssignName(name: String, token: String) extends AuthenticatedRootMsg 
 // Client tries to create room
 case class CreateRoom(roomName: String, token: String) extends AuthenticatedRootMsg with SerializableInEvent
 
+case class GameRequestInfo(token: String) extends InEvent
 
 object SerializableInEvent {
   implicit val assignNameRead = Json.reads[AssignName]
@@ -137,6 +142,8 @@ object OutEvent {
   implicit val roomCreationResult = Json.writes[RoomCreationResult]
   implicit val sendMapResourceWrite = Json.writes[SendMapResource]
 
+  implicit val notifyRoomLeaveStatusWrite = Json.writes[NotifyRoomLeaveStatus]
+  implicit val notifyClientResumeStatusWrite = Json.writes[NotifyClientResumeStatus]
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
   implicit val notifyGameStartWrite = Json.writes[NotifyGamePhaseStart]

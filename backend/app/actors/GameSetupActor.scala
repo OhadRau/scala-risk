@@ -30,6 +30,8 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
       } yield handlePlaceArmy(player, territory)
     case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
       handleMoveArmy(armyCount, territoryFrom, territoryTo)
+    case req: GameRequestInfo =>
+      notifyPlayerTurn()
   }
 
   def handlePlaceArmy(player: Player, territoryId: Int): Unit = {

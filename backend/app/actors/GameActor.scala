@@ -37,6 +37,8 @@ class GameActor(players: Seq[Player]) extends Actor {
   val setupActor = context.actorOf(GameSetupActor.props(players, game))
   val playActor = context.actorOf(GamePlayActor.props(players, game))
 
+  var started: Boolean = false
+
   override def receive: Receive = {
     case msg: GameMsg =>
       logger.debug(s"Current phase: ${game.state.gamePhase}")
@@ -47,6 +49,21 @@ class GameActor(players: Seq[Player]) extends Actor {
           playActor forward msg
         case GameOver => ()
       }
+    case requestInfo: GameRequestInfo => for {
+      player <- players.find(_.client.forall(c => c.client.token == requestInfo.token))
+    } yield player.client match {
+      case Some(cwa) =>
+        cwa.actor ! NotifyGameStarted(game.state)
+        cwa.actor ! SendMapResource(game.state.map.resource)
+        game.state.gamePhase match {
+          case Setup =>
+            setupActor forward requestInfo
+          case Play =>
+            cwa.actor ! NotifyGamePhaseStart(game.state)
+            playActor forward requestInfo
+        }
+      case None =>
+    }
     case _: NotifyGamePhaseStart =>
       playActor ! StartGamePlay
   }

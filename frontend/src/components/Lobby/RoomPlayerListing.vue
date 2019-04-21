@@ -23,7 +23,7 @@
       <v-subheader>{{players.length}} players(s) found</v-subheader>
     </div>
     <v-list-tile v-else>
-      <v-list-tile-content>No Rooms Yet. Create One!</v-list-tile-content>
+      <v-list-tile-content>How can you be in an empty room?</v-list-tile-content>
     </v-list-tile>
   </v-list>
 </template>

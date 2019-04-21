@@ -13,7 +13,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-case class ClientWithActor(client: Client, actor: ActorRef)
+case class ClientWithActor(client: Client, var actor: ActorRef)
 
 // Don't forget to add an implicit read for serializableInEvent and write for
 // outEvent!
@@ -91,15 +91,41 @@ class RootActor() extends Actor {
       case AssignName(name, token) => assignName(token, name)
       case SetToken(token, oldToken) =>
         clients.get(oldToken) match {
-          case Some(clientWithActor) =>
-            val sender = client.actor
+          case Some(oldClientWithActor) =>
+            val currentSocketActor = client.actor
             clients -= token
-            clients += oldToken -> ClientWithActor(client.client, sender)
-            sender ! Token(oldToken, clients(oldToken).client.publicToken)
+            logger.debug("New Client " + currentSocketActor.toString())
+            oldClientWithActor.actor = currentSocketActor
+            currentSocketActor ! Token(oldToken, clients(oldToken).client.publicToken)
+            notifyClientResumeStatus(oldClientWithActor)
           case None => clients.retain((_, clientWithActor) => clientWithActor.actor != sender)
         }
       case Pong(token) =>
         clients(token).client.alive = true
+        logger.debug(s"Client $token Ponged.")
+    }
+  }
+
+  //noinspection scalastyle
+  def notifyClientResumeStatus(client: ClientWithActor): Unit = {
+    val room = rooms.find(_._2.clients.contains(client.client.token)) match {
+      case Some(value) => Some(value._2.roomId)
+      case None => None
+    }
+    client.actor ! NotifyClientResumeStatus(
+      client.client.name match {case Some(v) => v case _ => ""},
+      room match {case Some(v) => v case _ => ""},
+      client.client.game match {case Some(v) => v case _ => ""}
+    )
+    notifyRoomsChanged(Some(client))
+    notifyClientsChanged()
+    room match {
+      case Some(r) =>
+        notifyRoomStatus(rooms(r), Some(client))
+        if (rooms(r).playing) {
+          games(r) ! GameRequestInfo(client.client.token)
+        }
+      case None =>
     }
   }
 
@@ -110,7 +136,7 @@ class RootActor() extends Actor {
         msg match {
           case JoinRoom(roomId, token) => joinRoom(roomId, token)
           case StartGame(roomId, token) => startGame(roomId, token)
-          case ClientReady(roomId, token) => ready(roomId, token)
+          case ClientReady(roomId, token, status) => ready(roomId, token, status)
           case LeaveRoom(roomId, token) => leaveRoom(roomId, token)
         }
       case _ =>
@@ -176,7 +202,6 @@ class RootActor() extends Actor {
 
   def leaveRoom(roomId: String, token: String)(implicit clientActor: ClientWithActor, room: Room): Unit = {
     room.removeClient(token)
-    // TODO: Send a message to the client who left?
     // If player who left was the host, assign a random player to be the host
     if (room.clients.isEmpty) {
       rooms -= room.roomId
@@ -189,9 +214,9 @@ class RootActor() extends Actor {
     notifyRoomsChanged()
   }
 
-  def ready(roomId: String, token: String)(implicit room: Room): Unit = {
+  def ready(roomId: String, token: String, status: Boolean)(implicit room: Room): Unit = {
     if (room.clients.contains(token)) {
-      room.setReady(token)
+      room.setReady(token, status)
       notifyRoomStatus(room)
     }
   }
@@ -207,10 +232,7 @@ class RootActor() extends Actor {
           client.client.name getOrElse "", client = Some(client))).toSeq
         val gameActor = context.actorOf(GameActor.props(playerSeq), s"game-$roomId")
         games += roomId -> gameActor
-
-        // Remove room
-        rooms -= roomId
-
+        room.playing = true
         notifyRoomsChanged()
       } else {
         logger.debug("Sending error message!")
@@ -248,10 +270,10 @@ class RootActor() extends Actor {
   def checkAlive(): Unit = {
     // Kill all clients who haven't responded since the last keepalive
     val deadClients = clients.values.filter(p => !p.client.alive)
-    // TODO: Handle killed clients?
     for (clientWithActor <- deadClients) {
       logger.debug(s"Killing ${clientWithActor.client.name} for inactivity")
       clientWithActor.actor ! Kill("Killed for inactivity")
+      context.stop(clientWithActor.actor);
     }
     rooms.retain((_, room) => {
       room.clients.retain((_, clientWithActor) => clientWithActor.client.alive)
