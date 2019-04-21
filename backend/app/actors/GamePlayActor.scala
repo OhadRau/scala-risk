@@ -81,7 +81,7 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       if (territoryFrom.neighbours.contains(territoryTo)) {
         val attackRoll = generateDiceRoll(armyCount)
           .sorted(Ordering[Int].reverse)
-          .drop(territoryTo.armies)
+          .take(territoryTo.armies)
         val defenseRoll = generateDiceRoll(Math.min(3, territoryTo.armies))
           .sorted(Ordering[Int].reverse).take(attackRoll.size)
         (attackRoll zip defenseRoll)
