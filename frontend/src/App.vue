@@ -31,6 +31,8 @@ export default {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === 'SOCKET_ONOPEN') {
         this.$toastr('success', 'Connected to Server!')
+      } else if (mutation.type === 'SOCKET_ONCLOSE') {
+        this.$toastr('error', 'Remote closed socket unexpectedly')
       } else if (mutation.type === 'SOCKET_ONMESSAGE') {
         processMessage(this.$store, this.$socket, this.$toastr, mutation.payload)
       } else if (mutation.type === types.GAME_RESUME) {
@@ -38,7 +40,8 @@ export default {
         if (notify.name && !notify.game) {
           this.$router.replace({name: 'Lobby'})
         }
-        // TODO Game resume
+      } else if (mutation.type === types.GAME_STARTED) {
+        this.$router.replace({name: 'Game'})
       }
     })
   }

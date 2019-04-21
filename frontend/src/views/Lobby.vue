@@ -4,18 +4,7 @@
       <RoomList/>
     </v-flex>
     <v-flex xs12 sm6 md4 lg4 xl2 pa-1 v-if="joinedRoom.roomId !== null">
-      <v-card>
-        <v-toolbar>
-          <v-toolbar-title>Players in Room: {{joinedRoom.name}}</v-toolbar-title>
-          <v-spacer/>
-        </v-toolbar>
-        <PlayerList :players="currentRoomPlayerList" :key-token="hostPublicToken" key-value="👑Host"/>
-        <v-card-actions>
-          <v-spacer/>
-          <v-btn color="primary" v-if="showStartGame" :disabled="!roomReady" @click="startGame">Start Game</v-btn>
-          <v-btn color="primary" v-if="!showStartGame" @click="sendReady">Ready</v-btn>
-        </v-card-actions>
-      </v-card>
+      <RoomDetail/>
     </v-flex>
     <v-flex xs12 sm6 md4 lg4 xl2 pa-1>
       <v-card>
@@ -36,6 +25,7 @@ import {ClientReady, StartGame} from '@/models/packets'
 import PlayerList from '../components/Lobby/PlayerList'
 import {mapGetters} from 'vuex'
 import {types} from '@/vuex/modules'
+import RoomDetail from '../components/Lobby/RoomDetail'
 
 export default {
   name: 'Lobby',
@@ -89,7 +79,7 @@ export default {
       }
     })
   },
-  components: {PlayerList, RoomList}
+  components: {RoomDetail, PlayerList, RoomList}
 }
 </script>
 
