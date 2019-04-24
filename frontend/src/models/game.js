@@ -24,8 +24,8 @@ export function placeArmy (territoryId) {
   }
 }
 
-export function moveArmy (from, to) {
-  console.log(`moveArmy from ${from} to ${to}`)
+export function moveArmy (from, to, armyNum) {
+  console.log(`Move ${armyNum} armies from ${from} to ${to}`)
 }
 
 export function attack (from, to, armyNum) {
