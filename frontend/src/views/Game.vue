@@ -99,6 +99,20 @@
         </v-flex>
       </v-layout>
     </v-flex>
+    <div id="app">
+      <button
+        type="button"
+        class="btn"
+        @click="showModal"
+      >
+        Open Modal!
+      </button>
+
+      <modal
+        v-show="isModalVisible"
+        @close="closeModal"
+      />
+    </div>
   </v-layout>
 </template>
 
@@ -106,6 +120,7 @@
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
+import modal from '@/components/Lobby/modal.vue'
 
 export default {
   name: 'Game',
@@ -113,6 +128,9 @@ export default {
     if (this.$store.state.game.game.players.length === 0) {
       this.$router.replace({name: 'home'})
     }
+  },
+  components: {
+    modal
   },
   data () {
     return {
@@ -123,7 +141,8 @@ export default {
       myTurn: true,
       attackGroup: 1,
       defendGroup: 1,
-      colors: ['red', 'blue', 'black', 'green', 'orange', 'violet']
+      colors: ['red', 'blue', 'black', 'green', 'orange', 'violet'],
+      isModalVisible: false
     }
   },
   computed: {
@@ -249,6 +268,12 @@ export default {
         case gameActions.ATTACK:
           return 'E'
       }
+    },
+    showModal () {
+      this.isModalVisible = true
+    },
+    closeModal () {
+      this.isModalVisible = false
     }
   },
   mounted () {
