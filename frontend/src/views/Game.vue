@@ -100,17 +100,17 @@
       </v-layout>
     </v-flex>
     <div id="app">
-      <button
-        type="button"
-        class="btn"
-        @click="showModal"
-      >
-        Open Modal!
-      </button>
-
+      <!--<button-->
+        <!--type="button"-->
+        <!--class="btn"-->
+        <!--@click="showModal"-->
+      <!--&gt;-->
+        <!--Open Modal!-->
+      <!--</button>-->
       <modal
         v-show="isModalVisible"
-        @close="closeModal"
+        @close="closeModalandUpdate"
+        @fortify="getFortificationInfo($event)"
       />
     </div>
   </v-layout>
@@ -142,7 +142,9 @@ export default {
       attackGroup: 1,
       defendGroup: 1,
       colors: ['red', 'blue', 'black', 'green', 'orange', 'violet'],
-      isModalVisible: false
+      isModalVisible: false,
+      fortificationArmy: 0,
+      dontReset: false
     }
   },
   computed: {
@@ -186,8 +188,25 @@ export default {
             break
           case gameActions.MOVE_ARMY:
             if (this.lastSelected !== -1 && this.selected !== -1) {
-              moveArmy(this.lastSelected, this.selected)
-              this.selected = -1
+              if (this.$store.state.game.game.territories[this.selected].armies > 1) {
+                if (this.gamePublicToken ===
+                  this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
+                  if (this.gamePublicToken === this.$store.state.game.game.territories[this.selected].ownerToken) {
+                    if (this.$store.state.game.game.territories[this.lastSelected].neighbours.includes(this.selected)) {
+                      this.dontReset = true
+                      this.isModalVisible = true
+                    } else {
+                      this.$toastr('info', 'Please select an adjacent territory')
+                    }
+                  } else {
+                    this.$toastr('info', 'Please select your own territory')
+                  }
+                } else {
+                  this.$toastr('info', 'Please select your own territory')
+                }
+              } else {
+                this.$toastr('info', 'Can\'t move army from a territory with 1 army only')
+              }
             }
             break
           case gameActions.ATTACK:
@@ -234,7 +253,9 @@ export default {
             }
             break
         }
-        this.lastSelected = this.selected
+        if (!this.dontReset) {
+          this.lastSelected = this.selected
+        }
       }
     },
     renderTerritory (territory, index) {
@@ -272,8 +293,43 @@ export default {
     showModal () {
       this.isModalVisible = true
     },
+    closeModalandUpdate () {
+      this.isModalVisible = false
+      this.selected = -1
+      this.lastSelected = this.selected
+      this.dontReset = false
+    },
     closeModal () {
       this.isModalVisible = false
+    },
+    getFortificationInfo (inputArmy) {
+      this.fortificationArmy = inputArmy
+      if (!isNaN(inputArmy)) {
+        if (inputArmy > 0) {
+          if (inputArmy <
+            this.$store.state.game.game.territories[this.lastSelected].armies) {
+            this.fortify()
+          } else {
+            this.$toastr('info',
+              'Armies for fortification needs to be less than armies at current territory')
+            this.closeModal()
+            this.showModal()
+          }
+        } else {
+          this.$toastr('info', 'Armies for fortification needs to be greater than 0')
+          this.closeModal()
+          this.showModal()
+        }
+      } else {
+        this.$toastr('info', 'Armies for fortification needs to be a number')
+        this.closeModal()
+        this.showModal()
+      }
+      // this.$toastr('info', 'Armies moved: ', this.fortificationArmy)
+    },
+    fortify () {
+      moveArmy(this.lastSelected, this.selected, this.fortificationArmy)
+      this.closeModalandUpdate()
     }
   },
   mounted () {
