@@ -15,10 +15,9 @@ export function placeArmy (territoryId) {
   const x = store.getters.getTerritory(territoryId).ownerToken
   console.log(x)
   if (store.getters.getTerritory(territoryId).ownerToken === store.getters.gamePublicToken || store.getters.getTerritory(territoryId).ownerToken === '') {
-    console.log('yay')
     // Check if has enough armies
     if (store.getters.armies > 0) {
-      console.log('yay2')
+      console.log('Sending placeArmy object')
       Vue.$socket.sendObj(new PlaceArmy(store.state.game.token, store.state.game.joinedRoom.roomId, territoryId))
     }
   }
@@ -30,7 +29,6 @@ export function moveArmy (from, to, armyNum) {
   // console.log(store.state.game.joinedRoom.roomId)
   Vue.$socket.sendObj(new MoveArmy(store.state.game.token, store.state.game.joinedRoom.roomId,
     parseInt(from), parseInt(to), parseInt(armyNum)))
-  console.log('Move Army sent')
 }
 
 export function attack (from, to, armyNum) {

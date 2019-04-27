@@ -53,11 +53,10 @@ class RootActor() extends Actor {
         implicit val client: ClientWithActor = matchedClient
         msg match {
           case ForwardToGame(_, gameId, gameMsg) =>
-            logger.info("Inside forward to game")
             games.get(gameId) match {
               case Some(gameActor) => gameActor forward gameMsg
               case None => client.actor ! Err("No game with that id exists!")
-              case _ => logger.info("Something wrong with input??")
+              case _ =>
             }
           case ForwardToChat(_, chatMsg) => chatActor forward(client, chatMsg)
           case a: AuthenticatedRootMsg => handleAuthenticatedRootMessage(a)

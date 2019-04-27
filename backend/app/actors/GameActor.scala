@@ -42,7 +42,6 @@ class GameActor(players: Seq[Player]) extends Actor {
 
   override def receive: Receive = {
     case msg: GameMsg =>
-      logger.debug("Got here")
       logger.debug(s"Current phase: ${game.state.gamePhase}")
       game.state.gamePhase match {
         case Setup =>
@@ -64,8 +63,8 @@ class GameActor(players: Seq[Player]) extends Actor {
             cwa.actor ! NotifyGamePhaseStart(game.state)
             playActor forward requestInfo
         }
-      case None => logger.debug("In Receive None")
-      case _ => logger.debug("In Receive all")
+      case None =>
+      case _ =>
     }
     case _: NotifyGamePhaseStart =>
       playActor ! StartGamePlay

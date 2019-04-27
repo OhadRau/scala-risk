@@ -115,7 +115,8 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
   }
 
   def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
-    logger.info("At Handle Move Army")
+    logger.debug(s"Got a handlePlaceArmy to move $armyCount armies from " +
+      s"$territoryFrom to $territoryTo")
     game.state.map.territories(territoryFrom).armies -= armyCount
     game.state.map.territories(territoryTo).armies += armyCount
     notifyGameState()
