@@ -10,7 +10,7 @@ trait TurnPhase
 
 case object PlaceArmies extends TurnPhase
 case object Attack extends TurnPhase
-case object Fortify extends TurnPhase
+case object Move extends TurnPhase
 
 case class TerritoryReady(id: Int)
 
@@ -21,7 +21,7 @@ object SerializableTurnPhase {
     def writes(phase: TurnPhase): JsValue = phase match {
       case PlaceArmies => Json.toJson("PlaceArmies")
       case Attack => Json.toJson("Attack")
-      case Fortify => Json.toJson("Fortify")
+      case Move => Json.toJson("MoveArmy")
     }
   }
 }
@@ -45,8 +45,10 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
       } yield handlePlaceArmy(player, territory)
-    case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
-      handleMoveArmy(armyCount, territoryFrom, territoryTo)
+    case MoveArmy(token: String, territoryFrom: Int, territoryTo: Int, armyCount: Int) =>
+      for {
+        player <- players.find(p => p.client.forall(c => c.client.token == token))
+      } yield handleMoveArmy(armyCount, territoryFrom, territoryTo)
     case AttackTerritory(token: String, territoryFrom: Int, territoryTo: Int, armyCount: Int) =>
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
@@ -113,6 +115,9 @@ class GamePlayActor(players: Seq[Player], game: Game) extends Actor with Timers 
   }
 
   def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
+    logger.info("At Handle Move Army")
+    game.state.map.territories(territoryFrom).armies -= armyCount
+    game.state.map.territories(territoryTo).armies += armyCount
     notifyGameState()
   }
 

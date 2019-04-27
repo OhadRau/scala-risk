@@ -28,8 +28,6 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
       for {
         player <- players.find(p => p.client.forall(c => c.client.token == token))
       } yield handlePlaceArmy(player, territory)
-    case MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) =>
-      handleMoveArmy(armyCount, territoryFrom, territoryTo)
     case req: GameRequestInfo =>
       notifyPlayerTurn()
   }
@@ -61,9 +59,9 @@ class GameSetupActor(players: Seq[Player], game: Game) extends Actor {
     }
   }
 
-  def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
-    notifyGameState()
-  }
+//  def handleMoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int): Unit = {
+//    notifyGameState()
+//  }
 
   def startGamePlay(): Unit = {
     logger.info("in startGamePlay")

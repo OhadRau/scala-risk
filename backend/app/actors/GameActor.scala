@@ -8,7 +8,8 @@ sealed trait GameMsg
 
 case class PlaceArmy(token: String, territoryId: Int) extends GameMsg
 case class AttackTerritory(token: String, fromTerritoryId: Int, toTerritoryId: Int, armyCount: Int) extends GameMsg
-case class MoveArmy(armyCount: Int, territoryFrom: Int, territoryTo: Int) extends GameMsg
+case class MoveArmy(token: String, fromTerritoryId: Int, toTerritoryId: Int,
+                    armyCount: Int) extends GameMsg
 
 object SerializableGameMsg {
   implicit val placeArmyRead = Json.reads[PlaceArmy]
@@ -41,6 +42,7 @@ class GameActor(players: Seq[Player]) extends Actor {
 
   override def receive: Receive = {
     case msg: GameMsg =>
+      logger.debug("Got here")
       logger.debug(s"Current phase: ${game.state.gamePhase}")
       game.state.gamePhase match {
         case Setup =>
@@ -62,7 +64,8 @@ class GameActor(players: Seq[Player]) extends Actor {
             cwa.actor ! NotifyGamePhaseStart(game.state)
             playActor forward requestInfo
         }
-      case None =>
+      case None => logger.debug("In Receive None")
+      case _ => logger.debug("In Receive all")
     }
     case _: NotifyGamePhaseStart =>
       playActor ! StartGamePlay
