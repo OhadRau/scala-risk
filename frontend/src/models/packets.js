@@ -142,6 +142,21 @@ export class AttackTerritory {
   }
 }
 
+export class MoveArmy {
+  constructor (token, gameId, fromTerritoryId, toTerritoryId, armyCount) {
+    this.token = token
+    this.gameId = gameId
+    this.msg = {
+      _type: 'actors.MoveArmy',
+      token: token,
+      fromTerritoryId: fromTerritoryId,
+      toTerritoryId: toTerritoryId,
+      armyCount: armyCount
+    }
+    this._type = 'actors.ForwardToGame'
+  }
+}
+
 export class Err {
   constructor (other) {
     this.message = other.msg

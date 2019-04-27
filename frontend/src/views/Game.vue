@@ -120,7 +120,7 @@
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
-import modal from '@/components/Lobby/modal.vue'
+import modal from '@/views/modal.vue'
 
 export default {
   name: 'Game',
@@ -188,7 +188,8 @@ export default {
             break
           case gameActions.MOVE_ARMY:
             if (this.lastSelected !== -1 && this.selected !== -1) {
-              if (this.$store.state.game.game.territories[this.selected].armies > 1) {
+              if
+              (this.$store.state.game.game.territories[this.lastSelected].armies > 1) {
                 if (this.gamePublicToken ===
                   this.$store.state.game.game.territories[this.lastSelected].ownerToken) {
                   if (this.gamePublicToken === this.$store.state.game.game.territories[this.selected].ownerToken) {
