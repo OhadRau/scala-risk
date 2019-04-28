@@ -1,20 +1,38 @@
 {
   "vertices": [
-    ["A", 10],
-    ["B", 10],
-    ["C", 10],
-    ["D", 10],
-    ["E", 10]
+    ["Scheme", "state1", "stateLabel1", 10],
+    ["Rust", "state2", "stateLabel2", 10],
+    ["Haskell", "state3", "stateLabel3", 10],
+    ["F#", "state4", "stateLabel4", 10],
+    ["Assembly", "state5", "stateLabel5", 10],
+    ["C++", "state6", "stateLabel6", 10],
+    ["Scala", "state7", "stateLabel7", 10],
+    ["Java", "state8", "stateLabel8", 10],
+    ["Kotlin", "state9", "stateLabel9", 10],
+    ["C", "state10", "stateLabel10", 10],
+    ["Smalltalk", "state11", "stateLabel11", 10],
+    ["Common Lisp", "state12", "stateLabel12", 10],
+    ["OCaml", "state13", "stateLabel13", 10]
   ],
   "edges": [
-    ["E", "D"],
-    ["E", "C"],
-    ["D", "C"],
-    ["D", "A"],
-    ["D", "B"],
-    ["C", "A"],
-    ["C", "B"],
-    ["A", "B"]
+    ["C++", "Java"],
+    ["C++", "Rust"],
+    ["C++", "Assembly"],
+    ["C++", "C"],
+    ["Rust", "Assembly"],
+    ["Assembly", "C"],
+    ["Java", "Scala"],
+    ["Java", "Kotlin"],
+    ["Scala", "Common Lisp"],
+    ["Scala", "Scheme"],
+    ["Scala", "Haskell"],
+    ["Scala", "OCaml"],
+    ["Scala", "Smalltalk"],
+    ["Common Lisp", "Scheme"],
+    ["Scheme", "Haskell"],
+    ["Haskell", "OCaml"],
+    ["OCaml", "F#"],
+    ["OCaml", "Smalltalk"]
   ],
   "interval": 10000
 }

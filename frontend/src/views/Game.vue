@@ -6,8 +6,10 @@
     <v-flex xs8 d-flex>
       <svg width="100%" viewBox="0 0 2000 700" @click="territoryClicked(-1)">
         <svg :viewBox="mapResource.viewBox">
+          <defs v-html="mapResource.labelPaths">
+          </defs>
           <g v-for="(territory, index) in mapResource.territories" :key="index"
-             v-html="renderTerritory(territory, index)"
+             v-html="renderTerritory(territory, mapResource.names[index], mapResource.labels[index], index)"
              @click.stop="territoryClicked(index)" :class="[{clicked: selected===index,
              lastClicked: lastSelected===index}, currentAction]">
           </g>
@@ -259,17 +261,17 @@ export default {
         }
       }
     },
-    renderTerritory (territory, index) {
+    renderTerritory (territory, name, label, index) {
       var owner = this.$store.state.game.game.territories[index].ownerToken
       let htmlObject = document.createElement('div')
-      htmlObject.innerHTML = territory
-      htmlObject.getElementsByTagName('tspan')['0'].innerHTML = this.$store.state.game.game.territories[index].armies
+      htmlObject.innerHTML = label
+      htmlObject.getElementsByTagName('textPath')['0'].innerHTML = `${name} - ${this.$store.state.game.game.territories[index].armies}`
       if (owner === '') {
-        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:#d4aa00;stroke-width:0.26458332')
+        htmlObject.getElementsByTagName('textPath')['0'].setAttribute('style', 'fill:#d4aa00;stroke-width:0.26458332')
       } else {
-        htmlObject.getElementsByTagName('tspan')['0'].setAttribute('style', 'fill:' + this.playerColors[owner] + ';stroke-width:0.26458332')
+        htmlObject.getElementsByTagName('textPath')['0'].setAttribute('style', 'fill:' + this.playerColors[owner] + ';stroke-width:0.26458332')
       }
-      return htmlObject.firstChild.outerHTML
+      return territory + htmlObject.firstChild.outerHTML
     },
     getActionName (action) {
       switch (action) {

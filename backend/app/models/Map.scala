@@ -32,15 +32,22 @@ object Map {
   def loadFromFile(map: String): Either[String, Map] =
     for {
       config <- getConfiguration(s"territoryConfiguration/$map/graph.json")
-      svg <- getSVG(s"territoryConfiguration/$map/map.svg")
+      svg <- getSVG(s"territoryConfiguration/$map/map.svg",
+        config.vertices.map(v => v.name),
+        config.vertices.map(v => v.id),
+        config.vertices.map(v => v.labelId))
     } yield createMapFromConfiguration(config, svg)
 
-  def getSVG(path: String): Either[String, MapResource] = {
+  def getSVG(path: String, names: Seq[String], states: Seq[String], stateLabels: Seq[String]): Either[String, MapResource] = {
     try {
+      def getByIdList(svg: Elem, list: Seq[String]): Seq[String] =
+        svg \\ "_" filter (node => list contains (node \ "@id").text) map (_.mkString)
       val svg = XML.loadFile(path)
-      val svgGroups: Seq[String] = (svg \ "g") map (_.mkString)
+      val svgGroups = getByIdList(svg, states)
+      val labelGroups = getByIdList(svg, stateLabels)
+      val labelPaths = svg \\ "_" find (node => (node \ "@id").text == "textPaths") map (_.mkString) getOrElse ""
       val viewBox = (svg \ "@viewBox").toString
-      Right(MapResource(viewBox, svgGroups))
+      Right(MapResource(viewBox, names, svgGroups, labelGroups, labelPaths))
     } catch {
       case _: SAXParseException =>
         Left(s"Couldn't parse SVG for map at $path")
@@ -87,13 +94,13 @@ object Map {
   )
 }
 
-case class MapResource(viewBox: String, territories: Seq[String])
+case class MapResource(viewBox: String, names: Seq[String], territories: Seq[String], labels: Seq[String], labelPaths: String)
 
 object MapResource {
   implicit val mapResourceWrite: Writes[MapResource] = Json.writes[MapResource]
 }
 
-case class Vertex(name: String, maxCapacity: Int)
+case class Vertex(name: String, id: String, labelId: String, maxCapacity: Int)
 
 case class Edge(from: String, to: String)
 
@@ -102,7 +109,9 @@ case class MapConfiguration(vertices: Seq[Vertex], edges: Seq[Edge], interval: F
 object MapConfiguration {
   implicit val vertexRead: Reads[Vertex] = (
     (JsPath \ 0).read[String] and
-      (JsPath \ 1).read[Int]
+      (JsPath \ 1).read[String] and
+      (JsPath \ 2).read[String] and
+      (JsPath \ 3).read[Int]
     ) (Vertex.apply _)
   implicit val edgeRead: Reads[Edge] = (
     (JsPath \ 0).read[String] and
