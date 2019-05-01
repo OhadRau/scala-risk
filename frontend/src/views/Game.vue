@@ -115,6 +115,18 @@
         @fortify="getFortificationInfo($event)"
       />
     </div>
+
+    <v-dialog v-model="gameEndDialog" persistent max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Game Over</span>
+        </v-card-title>
+        <v-card-text>
+           <p class="text-md-center"> Winner: {{winnerName}} </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </v-layout>
 </template>
 
@@ -122,7 +134,8 @@
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
-import modal from '@/views/modal.vue'
+import {types} from '@/vuex/modules'
+// import modal from '@/views/modal.vue'
 
 export default {
   name: 'Game',
@@ -130,9 +143,6 @@ export default {
     if (this.$store.state.game.game.players.length === 0) {
       this.$router.replace({name: 'home'})
     }
-  },
-  components: {
-    modal
   },
   data () {
     return {
@@ -146,7 +156,8 @@ export default {
       colors: ['red', 'blue', 'black', 'green', 'orange', 'violet'],
       isModalVisible: false,
       fortificationArmy: 0,
-      dontReset: false
+      dontReset: false,
+      gameEndDialog: false
     }
   },
   computed: {
@@ -158,6 +169,10 @@ export default {
         colorMap[players[i].publicToken] = this.colors[i]
       }
       return colorMap
+    },
+    winnerName () {
+      var winnerToken = this.$store.state.game.winner
+      return this.$store.state.game.players.find(p => p.publicToken === winnerToken) ? this.$store.state.game.players.find(p => p.publicToken === winnerToken).name : ''
     }
   },
   methods: {
@@ -344,6 +359,16 @@ export default {
         }
       }
     )
+
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === types.NOTIFY_GAME_END) {
+        console.log('Game ended')
+        this.gameEndDialog = true
+        console.log(this.$store.state.game.winner)
+        console.log(this.$store.state.game)
+      }
+    })
+
     window.addEventListener('keydown', e => {
       switch (e.code) {
         case 'KeyQ':

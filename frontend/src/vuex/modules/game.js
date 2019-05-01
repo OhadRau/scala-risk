@@ -18,7 +18,8 @@ export const types = {
   GAME_STATE: 'GAME_STATE',
   MAP_RESOURCE: 'MAP_RESOURCE',
   NOTIFY_TURN: 'NOTIFY_TURN',
-  NOTIFY_GAME_PHASE_START: 'NOTIFY_GAME_PHASE_START'
+  NOTIFY_GAME_PHASE_START: 'NOTIFY_GAME_PHASE_START',
+  NOTIFY_GAME_END: 'NOTIFY_GAME_END'
 }
 const state = {
   token: null,
@@ -57,7 +58,8 @@ const state = {
     }]
   },
   turn: null,
-  turnPhase: null
+  turnPhase: null,
+  winner: null
 }
 const mutations = {
   [types.GAME_SEND_AUTHENTICATE] (state) {
@@ -166,6 +168,9 @@ const mutations = {
       ...state.game,
       phase: 'Realtime'
     }
+  },
+  [types.NOTIFY_GAME_END] (state, change) {
+    state.winner = change.winner
   }
 }
 const getters = {
