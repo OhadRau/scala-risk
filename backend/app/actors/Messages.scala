@@ -28,6 +28,7 @@ case class RoomMessage(senderName: String, message: String, timestamp: String) e
 case class NotifyGameStarted(state: GameState) extends OutEvent
 case class SendMapResource(resource: MapResource) extends OutEvent
 case class NotifyGameState(state: GameState) extends OutEvent
+case class NotifyGameEnd(state: GameState, winnerToken: String) extends OutEvent
 case class NotifyGamePhaseStart(state: GameState) extends OutEvent
 case class NotifyTurn(publicToken: String, turnPhase: TurnPhase) extends OutEvent
 case class NotifyNewArmies(newArmies: String) extends OutEvent
@@ -145,6 +146,7 @@ object OutEvent {
   implicit val notifyRoomLeaveStatusWrite = Json.writes[NotifyRoomLeaveStatus]
   implicit val notifyClientResumeStatusWrite = Json.writes[NotifyClientResumeStatus]
   implicit val notifyGameStateWrite = Json.writes[NotifyGameState]
+  implicit val notifyGameEndWrite = Json.writes[NotifyGameEnd]
   implicit val notifyGameStartedWrite = Json.writes[NotifyGameStarted]
   implicit val notifyGameStartWrite = Json.writes[NotifyGamePhaseStart]
   implicit val notifyTurnWrite = Json.writes[NotifyTurn]

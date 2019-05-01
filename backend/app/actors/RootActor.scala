@@ -46,8 +46,7 @@ class RootActor() extends Actor {
       handleUnauthenticatedMessage(msg)
   }
 
-  def handleAuthenticatedMessage(msg: AuthenticatedMsg) : Unit = {
-    logger.info(msg.toString)
+  def handleAuthenticatedMessage(msg: AuthenticatedMsg): Unit = {
     clients.get(msg.token) match {
       case Some(matchedClient) =>
         implicit val client: ClientWithActor = matchedClient
@@ -64,10 +63,9 @@ class RootActor() extends Actor {
           case _ =>
             logger.info("Lol matched none")
         }
-      case None => {
+      case None =>
         sender ! Err("Invalid Token")
         logger.debug("Client with invalid Token")
-      }
     }
   }
 
@@ -104,7 +102,6 @@ class RootActor() extends Actor {
         }
       case Pong(token) =>
         clients(token).client.alive = true
-        logger.debug(s"Client $token Ponged.")
     }
   }
 
@@ -186,7 +183,8 @@ class RootActor() extends Actor {
       }
       case None =>
         logger.error(s"Client with token $token tried to create a room, but had no name")
-        clientActor.actor ! RoomCreationResult(success = false, s"Client with token $token tried to create a room, but had no name")
+        clientActor.actor ! RoomCreationResult(success = false, s"Client with token $token tried to create a room, " +
+          s"but had no name")
     }
   }
 
@@ -245,7 +243,8 @@ class RootActor() extends Actor {
   }
 
   def notifyClientsChanged(): Unit = {
-    val names = clients.values.filter(_.client.name.isDefined).map(client => ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
+    val names = clients.values.filter(_.client.name.isDefined).map(client =>
+      ClientBrief(client.client.name.getOrElse(""), client.client.publicToken)
     ).toSeq
     clients.values foreach (_.actor ! NotifyClientsChanged(names))
   }
