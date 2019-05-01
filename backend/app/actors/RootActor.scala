@@ -219,10 +219,12 @@ class RootActor() extends Actor {
   def playAgain(roomId: String, token: String)(implicit room: Room): Unit = {
     if (room.playing) {
       // Delete game, reset room status, and set all other players to unready
+      context.stop(games(roomId))
       games.remove(roomId)
       room.playing = false
       for ((token, _) <- room.clients) {
         room.setReady(token, false)
+        clients(token).client.game = None
       }
     }
     room.setReady(token, true)
