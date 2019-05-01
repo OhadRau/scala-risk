@@ -47,7 +47,8 @@ object Map {
       val labelGroups = getByIdList(svg, stateLabels)
       val labelPaths = svg \\ "_" find (node => (node \ "@id").text == "textPaths") map (_.mkString) getOrElse ""
       val viewBox = (svg \ "@viewBox").toString
-      Right(MapResource(viewBox, names, svgGroups, labelGroups, labelPaths))
+      val style = (svg \\ "style").toString
+      Right(MapResource(viewBox, style, names, svgGroups, labelGroups, labelPaths))
     } catch {
       case _: SAXParseException =>
         Left(s"Couldn't parse SVG for map at $path")
@@ -94,7 +95,8 @@ object Map {
   )
 }
 
-case class MapResource(viewBox: String, names: Seq[String], territories: Seq[String], labels: Seq[String], labelPaths: String)
+case class MapResource(viewBox: String, style: String, names: Seq[String], territories: Seq[String],
+                       labels: Seq[String], labelPaths: String)
 
 object MapResource {
   implicit val mapResourceWrite: Writes[MapResource] = Json.writes[MapResource]

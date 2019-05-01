@@ -46,7 +46,11 @@ const state = {
     started: false,
     map: {
       viewBox: null,
-      territories: null
+      style: null,
+      names: [],
+      territories: [],
+      labels: [],
+      labelPaths: []
     },
     phase: 'Setup',
     players: [],
@@ -137,7 +141,11 @@ const mutations = {
       started: true,
       map: {
         viewBox: undefined,
-        territories: undefined
+        style: undefined,
+        names: undefined,
+        territories: undefined,
+        labels: undefined,
+        labelPaths: undefined
       },
       phase: 'Setup',
       players: change.players,
@@ -156,6 +164,7 @@ const mutations = {
       ...state.game,
       map: {
         viewBox: change.viewBox,
+        style: change.style,
         names: change.names,
         territories: change.territories,
         labels: change.labels,
