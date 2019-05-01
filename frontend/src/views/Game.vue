@@ -164,7 +164,7 @@ export default {
       isModalVisible: false,
       fortificationArmy: 0,
       dontReset: false,
-      gameEndDialog: true
+      gameEndDialog: false
     }
   },
   computed: {
