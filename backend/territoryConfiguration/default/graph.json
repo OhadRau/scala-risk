@@ -25,6 +25,7 @@
     ["Haskell", "SML"],
     ["OCaml", "Scheme"],
     ["OCaml", "Clojure"],
+    ["OCaml", "SML"],
     ["SML", "Common Lisp"],
     ["SML", "Scheme"],
     ["Scheme", "Common Lisp"],
