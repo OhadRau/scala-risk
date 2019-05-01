@@ -225,6 +225,7 @@ class RootActor() extends Actor {
       }
     }
     room.setReady(token, true)
+    notifyRoomStatus(room)
   }
 
   def ready(roomId: String, token: String, status: Boolean)(implicit room: Room): Unit = {
