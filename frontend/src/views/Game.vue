@@ -135,7 +135,7 @@ import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
 import {types} from '@/vuex/modules'
-// import modal from '@/views/modal.vue'
+import modal from '@/views/modal.vue'
 
 export default {
   name: 'Game',
@@ -143,6 +143,9 @@ export default {
     if (this.$store.state.game.game.players.length === 0) {
       this.$router.replace({name: 'home'})
     }
+  },
+  components: {
+    modal
   },
   data () {
     return {
@@ -364,8 +367,6 @@ export default {
       if (mutation.type === types.NOTIFY_GAME_END) {
         console.log('Game ended')
         this.gameEndDialog = true
-        console.log(this.$store.state.game.winner)
-        console.log(this.$store.state.game)
       }
     })
 
