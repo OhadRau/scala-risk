@@ -108,16 +108,15 @@ class RootActor() extends Actor {
     }
   }
 
-  //noinspection scalastyle
   def notifyClientResumeStatus(client: ClientWithActor): Unit = {
     val room = rooms.find(_._2.clients.contains(client.client.token)) match {
       case Some(value) => Some(value._2.roomId)
       case None => None
     }
     client.actor ! NotifyClientResumeStatus(
-      client.client.name match {case Some(v) => v case _ => ""},
-      room match {case Some(v) => v case _ => ""},
-      client.client.game match {case Some(v) => v case _ => ""}
+      client.client.name.getOrElse(""),
+      room.getOrElse(""),
+      client.client.game.getOrElse("")
     )
     notifyRoomsChanged(Some(client))
     notifyClientsChanged()

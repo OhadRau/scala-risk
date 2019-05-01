@@ -154,7 +154,10 @@ const mutations = {
       ...state.game,
       map: {
         viewBox: change.viewBox,
-        territories: change.territories
+        names: change.names,
+        territories: change.territories,
+        labels: change.labels,
+        labelPaths: change.labelPaths
       }
     }
   },
@@ -192,6 +195,9 @@ const getters = {
   },
   getTerritory: (state) => (territoryId) => {
     return state.game.territories[territoryId]
+  },
+  getLabel: (state) => (territoryId) => {
+    return state.game.labels[territoryId]
   },
   players: (state) => {
     return state.players

@@ -95,7 +95,10 @@ export class MapResource {
   constructor (other) {
     console.log(JSON.parse(JSON.stringify(other)))
     this.viewBox = other.resource.viewBox
+    this.names = other.resource.names
     this.territories = other.resource.territories
+    this.labels = other.resource.labels
+    this.labelPaths = other.resource.labelPaths
   }
 }
 
