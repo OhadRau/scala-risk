@@ -117,6 +117,12 @@ export class NotifyGamePhaseStart {
   }
 }
 
+export class NotifyGameEnd {
+  constructor (other) {
+    this.winner = other.winnerToken
+  }
+}
+
 export class PlaceArmy {
   constructor (token, gameId, territoryId) {
     this.token = token
@@ -179,6 +185,15 @@ export class LeaveRoom {
     this._type = 'actors.LeaveRoom'
   }
 }
+
+export class PlayAgain {
+  constructor (token, roomId) {
+    this.token = token
+    this.roomId = roomId
+    this._type = 'actors.PlayAgain'
+  }
+}
+
 export class SetToken {
   constructor (oldToken, token) {
     this.oldToken = oldToken
@@ -315,6 +330,9 @@ export function processMessage (store, socket, toastr, message) {
       break
     case 'actors.NotifyRoomLeaveStatus':
       store.commit(types.GAME_ROOM_LEAVE, new NotifyRoomLeaveStatus(message))
+      break
+    case 'actors.NotifyGameEnd':
+      store.commit(types.NOTIFY_GAME_END, new NotifyGameEnd(message))
       break
     default:
       toastr('info', JSON.stringify(message), 'Un-parsed Socket Message:')

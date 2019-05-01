@@ -115,6 +115,21 @@
         @fortify="getFortificationInfo($event)"
       />
     </div>
+
+    <v-dialog v-model="gameEndDialog" persistent max-width="500px">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Game Over</span>
+        </v-card-title>
+        <v-card-text>
+           <p class="text-md-center"> Winner: {{winnerName}} </p>
+        </v-card-text>
+        <v-flex shrink>
+          <v-btn @click="newGame">New Game</v-btn>
+        </v-flex>
+      </v-card>
+    </v-dialog>
+
   </v-layout>
 </template>
 
@@ -122,7 +137,9 @@
 import {mapGetters} from 'vuex'
 import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
+import {types} from '@/vuex/modules'
 import modal from '@/views/modal.vue'
+import { PlayAgain } from '../models/packets'
 
 export default {
   name: 'Game',
@@ -146,11 +163,12 @@ export default {
       colors: ['red', 'blue', 'black', 'green', 'orange', 'violet'],
       isModalVisible: false,
       fortificationArmy: 0,
-      dontReset: false
+      dontReset: false,
+      gameEndDialog: false
     }
   },
   computed: {
-    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies']),
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies', 'gameToken', 'gameRoomRoomId']),
     playerColors () {
       var colorMap = {}
       var players = this.$store.state.game.players
@@ -158,6 +176,10 @@ export default {
         colorMap[players[i].publicToken] = this.colors[i]
       }
       return colorMap
+    },
+    winnerName () {
+      var winnerToken = this.$store.state.game.winner
+      return this.$store.state.game.players.find(p => p.publicToken === winnerToken) ? this.$store.state.game.players.find(p => p.publicToken === winnerToken).name : ''
     }
   },
   methods: {
@@ -273,6 +295,11 @@ export default {
       }
       return territory + htmlObject.firstChild.outerHTML
     },
+    newGame () {
+      this.$socket.sendObj(new PlayAgain(this.gameToken, this.gameRoomRoomId))
+      this.$router.replace({name: 'Lobby'})
+      this.$router.go()
+    },
     getActionName (action) {
       switch (action) {
         case gameActions.PLACE_ARMY:
@@ -344,6 +371,14 @@ export default {
         }
       }
     )
+
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === types.NOTIFY_GAME_END) {
+        console.log('Game ended')
+        this.gameEndDialog = true
+      }
+    })
+
     window.addEventListener('keydown', e => {
       switch (e.code) {
         case 'KeyQ':
