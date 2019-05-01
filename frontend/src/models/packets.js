@@ -185,6 +185,15 @@ export class LeaveRoom {
     this._type = 'actors.LeaveRoom'
   }
 }
+
+export class PlayAgain {
+  constructor (token, roomId) {
+    this.token = token
+    this.roomId = roomId
+    this._type = 'actors.PlayAgain'
+  }
+}
+
 export class SetToken {
   constructor (oldToken, token) {
     this.oldToken = oldToken

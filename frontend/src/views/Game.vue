@@ -124,6 +124,9 @@
         <v-card-text>
            <p class="text-md-center"> Winner: {{winnerName}} </p>
         </v-card-text>
+        <v-flex shrink>
+          <v-btn @click="newGame">New Game</v-btn>
+        </v-flex>
       </v-card>
     </v-dialog>
 
@@ -136,6 +139,7 @@ import {PlaceArmy} from '@/models/packets'
 import {gameActions, placeArmy, moveArmy, attack} from '@/models/game'
 import {types} from '@/vuex/modules'
 import modal from '@/views/modal.vue'
+import { PlayAgain } from '../models/packets'
 
 export default {
   name: 'Game',
@@ -160,11 +164,11 @@ export default {
       isModalVisible: false,
       fortificationArmy: 0,
       dontReset: false,
-      gameEndDialog: false
+      gameEndDialog: true
     }
   },
   computed: {
-    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies']),
+    ...mapGetters(['mapResource', 'getTurn', 'gamePublicToken', 'gamePhase', 'players', 'armies', 'gameToken', 'gameRoomRoomId']),
     playerColors () {
       var colorMap = {}
       var players = this.$store.state.game.players
@@ -290,6 +294,11 @@ export default {
         htmlObject.getElementsByTagName('textPath')['0'].setAttribute('style', 'fill:' + this.playerColors[owner] + ';stroke-width:0.26458332')
       }
       return territory + htmlObject.firstChild.outerHTML
+    },
+    newGame () {
+      this.$socket.sendObj(new PlayAgain(this.gameToken, this.gameRoomRoomId))
+      this.$router.replace({name: 'Lobby'})
+      this.$router.go()
     },
     getActionName (action) {
       switch (action) {
