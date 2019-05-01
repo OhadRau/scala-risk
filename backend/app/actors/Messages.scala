@@ -18,6 +18,7 @@ case class JoinRoom(roomId: String, token: String) extends RoomMsg with Serializ
 case class ClientReady(roomId: String, token: String, ready: Boolean = true) extends RoomMsg with SerializableInEvent
 case class StartGame(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 case class LeaveRoom(roomId: String, token: String) extends RoomMsg with SerializableInEvent
+case class PlayAgain(roomId: String, token: String) extends RoomMsg with SerializableInEvent
 
 case class ForwardToGame(token: String, gameId: String, msg: GameMsg) extends AuthenticatedMsg with SerializableInEvent
 case class ForwardToChat(token: String, msg: ChatMsg) extends AuthenticatedMsg with SerializableInEvent
@@ -110,6 +111,7 @@ object SerializableInEvent {
   implicit val listRoomRead = Json.reads[ListRoom]
   implicit val checkNameRead = Json.reads[CheckName]
   implicit val leaveRoomRead = Json.reads[LeaveRoom]
+  implicit val playAgainRead = Json.reads[PlayAgain]
   implicit val gameMsgRead = SerializableGameMsg.gameMsgRead
   implicit val chatMsgRead = SerializableChatMsg.chatMsgRead
   implicit val forwardToGameRead = Json.reads[ForwardToGame]

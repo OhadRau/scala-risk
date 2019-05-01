@@ -83,7 +83,6 @@ class RootActor() extends Actor {
     case other => logger.debug(other.toString)
   }
 
-
   def handleAuthenticatedRootMessage(authenticatedRootMsg: AuthenticatedRootMsg)(implicit client: ClientWithActor)
   : Unit = {
     authenticatedRootMsg match {
@@ -140,6 +139,7 @@ class RootActor() extends Actor {
           case StartGame(roomId, token) => startGame(roomId, token)
           case ClientReady(roomId, token, status) => ready(roomId, token, status)
           case LeaveRoom(roomId, token) => leaveRoom(roomId, token)
+          case PlayAgain(roomId, token) => playAgain(roomId, token)
         }
       case _ =>
         logger.error(s"PLayer with token ${msg.token} tried to join invalid room ${msg.roomId}")
@@ -214,6 +214,18 @@ class RootActor() extends Actor {
     }
     notifyRoomStatus(room)
     notifyRoomsChanged()
+  }
+
+  def playAgain(roomId: String, token: String)(implicit room: Room): Unit = {
+    if (room.playing) {
+      // Delete game, reset room status, and set all other players to unready
+      games.remove(roomId)
+      room.playing = false
+      for ((token, _) <- room.clients) {
+        room.setReady(token, false)
+      }
+    }
+    room.setReady(token, true)
   }
 
   def ready(roomId: String, token: String, status: Boolean)(implicit room: Room): Unit = {
